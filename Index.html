@@ -1,0 +1,1225 @@
+<title>Assumptions Collection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pathway+Extreme:opsz,wght@8..144,400;8..144,500;8..144,600;8..144,700;8..144,800&display=swap">
+<style>
+  :root{
+    --ink:#0A1C2B; --ink-2:#16324A; --muted:#5B6B78; --muted-2:#8494A0;
+    --line:#DDD6C6; --paper:#F6F2EA; --paper-flat:#FAFAF8; --card:#FFFFFF; --card-2:#FBF9F3;
+    --accent:#E51B3E; --brand-navy:#0A1C2B; --brand-cream:#F6F2EA;
+    --good:#1E8A6E; --good-bg:#E4F2ED;
+    --bad:#E51B3E; --bad-bg:#FCE4E8;
+    --pending:#9A6B12; --pending-bg:#F5E7C9;
+    --shadow: 0 1px 2px rgba(10,28,43,.06), 0 6px 20px -8px rgba(10,28,43,.18);
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#EEE7D8; --ink-2:#F6F2EA; --muted:#9FB0BC; --muted-2:#7B8C99;
+      --line:#28405430; --paper:#0A1C2B; --paper-flat:#0A1C2B; --card:#122A3D; --card-2:#0F2537;
+      --accent:#E51B3E;
+      --good:#3FB897; --good-bg:#12362E;
+      --bad:#E51B3E; --bad-bg:#3A1420;
+      --pending:#E7B95C; --pending-bg:#3A2E10;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -10px rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#EEE7D8; --ink-2:#F6F2EA; --muted:#9FB0BC; --muted-2:#7B8C99;
+    --line:#28405430; --paper:#0A1C2B; --paper-flat:#0A1C2B; --card:#122A3D; --card-2:#0F2537;
+    --accent:#E51B3E;
+    --good:#3FB897; --good-bg:#12362E;
+    --bad:#E51B3E; --bad-bg:#3A1420;
+    --pending:#E7B95C; --pending-bg:#3A2E10;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -10px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper-flat); color:var(--ink); font-family:'Pathway Extreme', system-ui, sans-serif; font-optical-sizing:auto;
+    position:relative; min-height:100vh;
+  }
+  .watermark{
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-repeat:no-repeat; background-position:center 18%; background-size:min(70vw,760px);
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .watermark{ display:none; } }
+  :root[data-theme="dark"] .watermark{ display:none; }
+  .num{ font-variant-numeric:tabular-nums; }
+  .page{ max-width:1180px; margin:0 auto; padding:26px 24px 64px; position:relative; z-index:1; }
+
+  .banner{
+    border-radius:8px; padding:9px 14px; font-size:12.5px; font-weight:600; margin-bottom:16px;
+  }
+  .banner.error{ background:var(--bad-bg); color:var(--bad); border:1px dashed var(--bad); }
+  .banner.info{ background:var(--pending-bg); color:var(--pending); border:1px dashed var(--pending); }
+  .banner.success{ background:var(--good-bg); color:var(--good); border:1px dashed var(--good); display:inline-block; }
+
+  .master-panel{
+    border:1px solid var(--line); border-radius:12px; padding:18px 20px; margin-bottom:22px; background:var(--panel-bg, transparent);
+  }
+  .master-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  #masterActionMsg{ margin-top:10px; }
+
+  .masthead{
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    background:var(--brand-navy); color:var(--brand-cream);
+    border-radius:14px; padding:20px 26px; box-shadow:var(--shadow); margin-bottom:18px;
+  }
+  .crest{
+    flex:none; width:56px; height:56px; border-radius:50%; overflow:hidden;
+    background:var(--brand-navy); box-shadow:0 0 0 2px #24384A;
+  }
+  .crest img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .masthead-text{ flex:1 1 320px; min-width:220px; }
+  .eyebrow{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#C7D6DE; font-weight:600; margin-bottom:2px; }
+  .masthead h1{ font-weight:700; font-size:clamp(22px,3vw,30px); margin:0 0 4px; text-wrap:balance; color:var(--brand-cream); }
+  .subtitle{ font-size:13px; color:#B9C7CF; max-width:640px; }
+  .cycle-tag{
+    flex:none; background:#061019; border:1px solid #24384A; border-radius:8px;
+    padding:8px 14px; font-size:12.5px; color:var(--brand-cream); text-align:center;
+  }
+  .cycle-tag b{ display:block; font-size:15px; }
+  .whoami{ font-size:11.5px; color:#9FB0BC; margin-top:6px; }
+
+  .viewtabs{ display:flex; gap:6px; margin:0 0 18px; }
+  .viewtabs button{
+    font-family:inherit; font-size:14px; font-weight:600;
+    background:transparent; color:var(--muted); border:1px solid var(--line);
+    padding:9px 18px; border-radius:999px; cursor:pointer; transition:.15s ease;
+  }
+  .viewtabs button:hover{ color:var(--ink); }
+  .viewtabs button.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .viewtabs .count{
+    display:inline-block; margin-left:6px; background:var(--accent); color:#fff;
+    font-size:10.5px; font-weight:700; border-radius:999px; padding:1px 6px;
+  }
+
+  h2.section-title{ font-size:15px; font-weight:700; margin:0 0 4px; }
+  p.section-sub{ font-size:12.5px; color:var(--muted); margin:0 0 16px; max-width:640px; }
+
+  /* group picker */
+  .group-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin-bottom:22px; }
+  .group-card{
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:16px 16px 14px; border-top:3px solid var(--line); cursor:pointer;
+    text-align:left; font-family:inherit; color:var(--ink); outline:2px solid transparent; outline-offset:2px;
+    transition:box-shadow .15s ease, outline-color .15s ease;
+  }
+  .group-card:hover{ box-shadow:0 2px 10px rgba(10,28,43,.14), 0 12px 26px -10px rgba(10,28,43,.28); }
+  .group-card:focus-visible{ outline-color:var(--accent); }
+  .group-card.active{ border-top-color:var(--accent); outline-color:var(--accent); }
+  .group-card .g-icon{ font-size:20px; margin-bottom:6px; display:block; }
+  .group-card .g-name{ font-weight:700; font-size:14.5px; margin-bottom:3px; }
+  .group-card .g-desc{ font-size:12px; color:var(--muted); line-height:1.4; }
+  .group-card .g-status{ font-size:11px; font-weight:600; margin-top:8px; color:var(--muted-2); }
+  .group-card .g-status.done{ color:var(--good); }
+  .group-card .g-status.pending{ color:var(--pending); }
+  .group-card .g-status.changes{ color:var(--bad); }
+
+  /* form */
+  .form-card{ background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px 24px 24px; margin-bottom:20px; }
+  .form-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:14px; margin-bottom:18px; border-bottom:1px solid var(--line); padding-bottom:14px; }
+  .form-head h3{ font-size:17px; margin:0 0 4px; }
+  .form-head p{ font-size:12.5px; color:var(--muted); margin:0; max-width:520px; }
+  .form-close{ font-family:inherit; font-size:12.5px; font-weight:600; background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer; flex:none; }
+  .form-close:hover{ color:var(--ink); border-color:var(--muted); }
+
+  .period-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--line); }
+  .period-row label{ font-size:12.5px; font-weight:600; color:var(--ink-2); }
+  .period-row select{
+    font-family:inherit; font-size:13px; color:var(--ink); background:var(--card-2);
+    border:1px solid var(--line); border-radius:7px; padding:7px 10px;
+  }
+
+  .field-group{ margin-bottom:20px; }
+  .field-group:last-of-type{ margin-bottom:6px; }
+  .field-group-title{ font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:10px; }
+  .field-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px 16px; }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field.wide{ grid-column:1/-1; }
+  .field label{ font-size:12.5px; color:var(--ink-2); font-weight:600; }
+  .field .hint{ font-size:11px; color:var(--muted); }
+  .field input, .field textarea, .field select{
+    font-family:inherit; font-size:13.5px; color:var(--ink); background:var(--card-2);
+    border:1px solid var(--line); border-radius:7px; padding:8px 10px;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .field input[type=number]{ font-variant-numeric:tabular-nums; }
+  .field textarea{ resize:vertical; min-height:56px; font-family:inherit; }
+
+  .hint{ font-size:11px; color:var(--muted); }
+  .count-field{ max-width:260px; }
+
+  /* repeater tables (squads / venues / meets / staff) */
+  .repeater{ overflow-x:auto; }
+  .repeater-table{ width:100%; border-collapse:collapse; min-width:480px; }
+  .repeater-table th{
+    text-align:left; font-size:10.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted);
+    font-weight:700; padding:0 8px 7px; border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  .repeater-table td{ padding:5px 8px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  .repeater-table tbody tr:last-child td{ border-bottom:none; }
+  .repeater-table input{
+    width:100%; font-family:inherit; font-size:13px; color:var(--ink); background:var(--card-2);
+    border:1px solid var(--line); border-radius:6px; padding:6px 8px; font-variant-numeric:tabular-nums;
+  }
+  .repeater-table input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .repeater-table input.rt-autofill{ border-color:var(--good); background:var(--good-bg); color:var(--good); font-weight:700; }
+  .repeater-table select{
+    width:100%; font-family:inherit; font-size:13px; color:var(--ink); background:var(--card-2);
+    border:1px solid var(--line); border-radius:6px; padding:6px 8px;
+  }
+  .repeater-table .rt-name{ font-weight:600; font-size:13px; }
+  .repeater-table .rt-cat{ font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+  .repeater-table .rt-computed{ font-weight:700; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; color:var(--good); }
+  .repeater-table .rt-remove{
+    background:transparent; border:none; color:var(--muted-2); cursor:pointer; font-size:15px; padding:4px 6px; line-height:1;
+  }
+  .repeater-table .rt-remove:hover{ color:var(--bad); }
+  .repeater-add{
+    font-family:inherit; font-size:12.5px; font-weight:600; background:transparent; color:var(--accent);
+    border:1px dashed var(--accent); border-radius:7px; padding:7px 14px; cursor:pointer; margin-top:10px;
+  }
+  .repeater-add:hover{ background:var(--bad-bg); }
+  .repeater-foot{
+    display:flex; justify-content:flex-end; gap:18px; padding:10px 8px 0; font-size:12px; color:var(--muted); flex-wrap:wrap;
+  }
+  .repeater-foot b{ color:var(--ink); font-variant-numeric:tabular-nums; font-size:13px; }
+  .section-note{ font-size:11px; color:var(--muted); margin-top:8px; }
+  .sub-rows-title{ margin-top:14px; font-weight:700; color:var(--ink); font-size:12px; }
+  .sub-rows-table{ margin-top:6px; margin-bottom:4px; }
+  .sub-rows-table th, .sub-rows-table td{ font-size:12px; }
+
+  .form-actions{ display:flex; align-items:center; gap:12px; margin-top:20px; padding-top:16px; border-top:1px solid var(--line); flex-wrap:wrap; }
+  .btn{ font-family:inherit; font-size:13.5px; font-weight:700; border-radius:8px; padding:10px 20px; cursor:pointer; border:none; }
+  .btn:disabled{ opacity:.55; cursor:default; }
+  .btn-primary{ background:var(--accent); color:#fff; }
+  .btn-primary:hover{ opacity:.92; }
+  .btn-ghost{ background:transparent; color:var(--muted); border:1px solid var(--line); }
+  .btn-ghost:hover{ color:var(--ink); border-color:var(--muted); }
+  .form-actions .note{ font-size:11.5px; color:var(--muted-2); }
+
+  .toast{
+    display:flex; align-items:center; gap:10px; background:var(--good-bg); color:var(--good);
+    border:1px solid var(--good); border-radius:8px; padding:10px 14px; font-size:13px; font-weight:600;
+    margin-bottom:18px;
+  }
+  .toast.err{ background:var(--bad-bg); color:var(--bad); border-color:var(--bad); }
+
+  /* treasurer queue */
+  .queue-summary{ display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+  .qs-tile{ background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px 18px; min-width:130px; }
+  .qs-tile .qv{ font-size:22px; font-weight:700; }
+  .qs-tile .ql{ font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  .qs-tile.pending .qv{ color:var(--pending); }
+  .qs-tile.approved .qv{ color:var(--good); }
+
+  .submission{ background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:12px; overflow:hidden; }
+  .sub-head{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 18px; cursor:pointer; }
+  .sub-head:hover{ background:var(--card-2); }
+  .sub-id{ font-size:11.5px; color:var(--muted-2); }
+  .sub-title{ font-weight:700; font-size:14.5px; }
+  .sub-meta{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .status-chip{ font-size:11px; font-weight:700; padding:4px 11px; border-radius:999px; flex:none; }
+  .status-chip.pending{ background:var(--pending-bg); color:var(--pending); }
+  .status-chip.approved{ background:var(--good-bg); color:var(--good); }
+  .status-chip.changes{ background:var(--bad-bg); color:var(--bad); }
+  .status-chip.draft{ background:var(--line); color:var(--muted); }
+  .sub-body{ padding:0 18px 18px; border-top:1px solid var(--line); }
+  .sub-body[hidden]{ display:none; }
+  .sub-fields{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px 16px; padding-top:14px; }
+  .sub-field .sfl{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; }
+  .sub-field .sfv{ font-size:13.5px; font-weight:600; margin-top:2px; }
+  .sub-actions{ display:flex; gap:10px; padding-top:14px; align-items:center; flex-wrap:wrap; }
+  .sub-actions .note{ font-size:11.5px; color:var(--muted-2); }
+  .btn-approve{ background:var(--good); color:#fff; }
+  .btn-approve:hover{ opacity:.9; }
+  .btn-decline{ background:transparent; color:var(--bad); border:1px solid var(--bad); }
+  .btn-decline:hover{ background:var(--bad-bg); }
+  .decide-notes{ width:100%; margin-top:10px; }
+  .decide-notes textarea{
+    width:100%; font-family:inherit; font-size:12.5px; color:var(--ink); background:var(--card-2);
+    border:1px solid var(--line); border-radius:7px; padding:8px 10px; resize:vertical; min-height:44px;
+  }
+  .sod-note{ font-size:11.5px; color:var(--bad); font-weight:600; }
+
+  .empty{ text-align:center; padding:50px 20px; color:var(--muted); font-size:13.5px; background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .loading{ text-align:center; padding:30px 20px; color:var(--muted); font-size:13px; }
+
+  footer.pagefoot{ margin-top:24px; font-size:12px; color:var(--muted-2); text-align:center; }
+
+  [hidden]{ display:none !important; }
+</style>
+
+<div class="watermark"></div>
+<div class="page">
+  <div id="bannerArea"></div>
+
+  <header class="masthead">
+    <div class="crest">
+      <!-- crest src is set from Utilities.base64Encode via a server-injected constant, or Matt can
+           paste the data URI from logo_b64.txt into this src attribute directly -->
+      <img id="crestImg" src="" alt="Windsor Swimming Club crest">
+    </div>
+    <div class="masthead-text">
+      <div class="eyebrow">Windsor Swimming Club</div>
+      <h1 id="mastheadTitle">Assumptions Collection</h1>
+      <div class="subtitle">Each group submits its own numbers below. The Treasurer reviews and approves before anything counts towards next year's budget.</div>
+      <div class="whoami" id="whoami" hidden></div>
+    </div>
+    <div class="cycle-tag">Budget cycle<b id="cycleYear">—</b></div>
+  </header>
+
+  <nav class="viewtabs" id="viewtabs" hidden>
+    <button data-view="submit" class="active">Submit Assumptions</button>
+    <button data-view="review" id="reviewTabBtn" hidden>Treasurer Review <span class="count" id="pendingCount">0</span></button>
+  </nav>
+
+  <section id="submitView" hidden>
+    <h2 class="section-title">Who are you submitting for?</h2>
+    <p class="section-sub">Pick your group — you'll only see the fields relevant to what you look after. Submitting sends it to the Treasurer for review, it doesn't change the live budget directly.</p>
+    <div class="group-grid" id="groupGrid"></div>
+    <div id="formArea"></div>
+  </section>
+
+  <section id="reviewView" hidden>
+    <h2 class="section-title">Submissions awaiting sign-off</h2>
+    <p class="section-sub">Approving marks a group's numbers as approved. Requesting changes sends it back to that group with your note attached.</p>
+    <div class="queue-summary">
+      <div class="qs-tile pending"><div class="qv" id="qPending">0</div><div class="ql">Pending</div></div>
+      <div class="qs-tile approved"><div class="qv" id="qApproved">0</div><div class="ql">Approved</div></div>
+      <div class="qs-tile"><div class="qv" id="qTotal">0</div><div class="ql">Total submissions</div></div>
+    </div>
+
+    <div class="master-panel" id="masterPanel">
+      <div class="field-group-title">Master 2027 budget</div>
+      <p class="section-sub" style="margin-top:0;">Rolls every group's latest <b>Approved</b> submission up into the <code>Master_2027</code> tab on the Sheet — same line items and months as the real Ledger. Open that tab directly to see or edit the figures; the buttons here just recalculate it and mark it live.</p>
+      <div id="masterStatus" class="hint">Loading…</div>
+      <div class="master-actions">
+        <button type="button" class="btn btn-ghost" id="refreshMasterBtn">Recalculate from Approved submissions</button>
+        <button type="button" class="btn btn-primary" id="publishBudgetBtn">Publish as live 2027 budget</button>
+      </div>
+      <div id="masterActionMsg"></div>
+    </div>
+
+    <div id="queueList"></div>
+  </section>
+
+  <footer class="pagefoot" id="pageFoot" hidden></footer>
+</div>
+
+<script>
+// ---- static UI metadata (field labels / layout only — no club data lives here) -------------
+
+const PERIODS = ['Full Year 2027', 'Q1 2027 (Jan–Mar)', 'Q2 2027 (Apr–Jun)', 'Q3 2027 (Jul–Sep)', 'Q4 2027 (Oct–Dec)'];
+let currentPeriod = PERIODS[0];
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Illustrative only — the real ClubHuB pay scale table isn't wired up yet.
+const PAY_SCALES = { CC1: 13.50, CC2: 15.00, CC3: 17.50, CC4: 20.00, AC1: 12.00, AC2: 13.25, AC3: 14.50 };
+
+const GROUPS = [
+  {
+    id: 'meets', icon: '🏊', name: 'Meet Team', desc: 'Hosted-meet income, entry fees, and meet-day costs.',
+    sections: [
+      { title: 'Novice galas', fields: [
+        { key: 'novice_gala_count', label: 'Novice galas — number planned', type: 'number' },
+        { key: 'novice_gala_fee', label: 'Novice gala entry fee (£/swimmer)', type: 'number' },
+      ]},
+      { title: 'Open meets hosted', type: 'meet_table', countLabel: 'Number of open meets hosted',
+        hint: 'Set the count, then fill in each meet — income and costs here feed Meets income/cost and Pool Costs in the ledger. Include Club Champs here too (novice galas have their own fields above).' },
+      { title: 'Away fixtures', fields: [
+        { key: 'away_meet_notes', label: 'Away-meet costs — any change vs. this year?', type: 'textarea', wide: true, hint: 'Coach travel, entry passes, expenses — trending up/down and why' },
+      ]},
+    ],
+  },
+  {
+    id: 'venues', icon: '🏟️', name: 'Pool & Venues', desc: 'Per-venue hire rates and expected inflation.',
+    sections: [
+      { title: 'Venue rates & inflation', type: 'venue_table',
+        hint: 'Each venue gets its own expected annual inflation — rates and increases vary venue to venue.' },
+      { title: 'Known changes', fields: [
+        { key: 'midyear_notes', label: 'Any confirmed mid-year rate changes?', type: 'textarea', wide: true, hint: 'Venue, month it takes effect, new rate' },
+      ]},
+    ],
+  },
+  {
+    id: 'staffing', icon: '🧑‍🏫', name: 'Coaching & Staffing', desc: 'Pay rates, contractor rates, CPD & course budget.',
+    sections: [
+      { title: 'Salaried roles', fields: [
+        { key: 'employees_cost', label: 'Employees — annual salary total (£)', type: 'number' },
+        { key: 'hoa_salary', label: 'Head of Academy — annual salary (£)', type: 'number' },
+        { key: 'ni_pct', label: 'Employer NI (%)', type: 'number' },
+        { key: 'pension_pct', label: 'Employer pension (%)', type: 'number' },
+      ]},
+      { title: 'Competitive coaches', type: 'staff_table', rowsKey: 'coaches_comp',
+        hint: 'One row per person. Enter a pay scale code to auto-fill the rate, or type an hourly rate directly.' },
+      { title: 'Academy staff', type: 'staff_table', rowsKey: 'coaches_academy',
+        hint: 'Same as competitive coaches — pay scale code auto-fills the rate where recognised, hourly rate otherwise.' },
+      { title: 'Development', fields: [
+        { key: 'cpd_budget', label: 'CPD & course budget for the year (£)', type: 'number' },
+        { key: 'staffing_notes', label: 'New hires, leavers, or rate changes to flag?', type: 'textarea', wide: true },
+      ]},
+    ],
+  },
+  {
+    id: 'membership', icon: '👥', name: 'Membership', desc: 'Squad headcounts, discounts and membership fee assumptions.',
+    sections: [
+      { title: 'Discount assumptions', fields: [
+        { key: 'discount_2nd_pct', label: '2nd-child discount (%)', type: 'number', hint: 'Applied to the 2nd-child count and that squad\'s fee, below' },
+        { key: 'discount_3rd_pct', label: '3rd+ child discount (%)', type: 'number', hint: 'Applied to the 3rd+-child count and that squad\'s fee, below' },
+      ]},
+      { title: 'Squads', type: 'squad_table',
+        hint: 'Members and Fee £/mo are pre-filled from Baseline_Squads in the Sheet — adjust either for expected joiners/leavers or 2027 fee changes, then set discount and staff (free) counts. Monthly income = members × fee, minus discounts and free staff.' },
+      { title: 'Outlook', fields: [
+        { key: 'membership_notes', label: 'Expected joiners/leavers or fee changes next year?', type: 'textarea', wide: true },
+      ]},
+    ],
+  },
+  {
+    id: 'admin', icon: '🗂️', name: 'General Admin', desc: 'Affiliation fees, software, kit & sundries.',
+    sections: [
+      { title: 'Fixed costs', fields: [
+        { key: 'asa_fee', label: 'ASA affiliation fee (£)', type: 'number' },
+        { key: 'software_cost', label: 'Software & subscriptions (£/yr)', type: 'number' },
+        { key: 'kit_budget', label: 'Kit & clothing budget (£)', type: 'number' },
+      ]},
+      { title: 'Notes', fields: [
+        { key: 'admin_notes', label: 'Anything else the Treasurer should know?', type: 'textarea', wide: true },
+      ]},
+    ],
+  },
+];
+
+// ---- app state --------------------------------------------------------------
+
+let BOOT = null;           // result of getBootstrapData()
+let openGroupId = null;
+let formRowState = {};     // current group's editable rows (squads / venues / meets / coaches)
+let currentSubmissionMeta = { submissionId: null, status: null, reviewNotes: null };
+let queueCache = null;      // last getReviewQueue() result
+let detailCache = {};       // submissionId -> getSubmissionDetail() result
+
+function groupById(id){ return GROUPS.find(g => g.id === id); }
+function fmtGBP(n){ return '£' + Math.round(n || 0).toLocaleString('en-GB'); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function showBanner(kind, message){
+  document.getElementById('bannerArea').innerHTML = `<div class="banner ${kind}">${esc(message)}</div>`;
+}
+function clearBanner(){ document.getElementById('bannerArea').innerHTML = ''; }
+
+// ---- bootstrap ----------------------------------------------------------------
+
+function boot(){
+  google.script.run.withSuccessHandler(onBootstrap).withFailureHandler(onBootstrapFailure).getBootstrapData();
+}
+
+function onBootstrapFailure(err){
+  showBanner('error', 'Something went wrong loading the page: ' + (err && err.message ? err.message : err));
+}
+
+function onBootstrap(data){
+  BOOT = data;
+  if (!data.ok){
+    showBanner('error', data.error || 'You do not currently have access to this tool.');
+    if (data.settings) applyFooter(data.settings);
+    return;
+  }
+  clearBanner();
+
+  document.getElementById('cycleYear').textContent = data.settings.year || '—';
+  const who = document.getElementById('whoami');
+  who.hidden = false;
+  who.textContent = data.user.name + ' · ' + (data.user.roles.length ? data.user.roles.join(', ') : 'Submitter') + ' · ' + data.user.email;
+
+  applyFooter(data.settings);
+
+  document.getElementById('viewtabs').hidden = false;
+  document.getElementById('submitView').hidden = false;
+  if (data.user.isReviewer){
+    document.getElementById('reviewTabBtn').hidden = false;
+  }
+  document.getElementById('pendingCount').textContent = data.pendingReviewCount || 0;
+
+  renderGroupGrid();
+  renderForm();
+  setupTabs();
+  if (data.user.isReviewer) setupMasterPanelButtons();
+}
+
+function applyFooter(settings){
+  const foot = document.getElementById('pageFoot');
+  if (settings && settings.deadline){
+    foot.hidden = false;
+    foot.textContent = 'Submissions due: ' + settings.deadline;
+  } else {
+    foot.hidden = true;
+    foot.textContent = '';
+  }
+}
+
+// ---- row-state helpers (squads / venues / meets / coaches) --------------------
+
+function defaultMeetRow(i){ return { name: 'Meet ' + i, month: '', income: 0, poolHire: 0, coachCosts: 0, gifts: 0, catering: 0 }; }
+function defaultCoachRow(){ return { name: '', payCode: '', rate: 0, hours: 0 }; }
+
+// ---- squad table (membership) --------------------------------------------------
+
+function squadRowHtml(s, i){
+  return `<tr data-i="${i}">
+    <td><span class="rt-name">${esc(s.name)}</span><br><span class="rt-cat">${esc(s.cat || '')}</span></td>
+    <td><input type="number" step="1" min="0" class="sq-members" value="${s.members}"></td>
+    <td><input type="number" step="any" min="0" class="sq-fee" value="${s.fee}" placeholder="£/mo"></td>
+    <td><input type="number" step="1" min="0" class="sq-second" value="${s.second}"></td>
+    <td><input type="number" step="1" min="0" class="sq-third" value="${s.third}"></td>
+    <td><input type="number" step="1" min="0" class="sq-staff" value="${s.staff}"></td>
+    <td class="rt-computed sq-income">£0</td>
+  </tr>`;
+}
+
+function renderSquadSection(sec){
+  return `
+    <div class="field-group">
+      <div class="field-group-title">${esc(sec.title)}</div>
+      ${sec.hint ? `<div class="hint" style="margin-bottom:10px;">${esc(sec.hint)}</div>` : ''}
+      <div class="repeater">
+        <table class="repeater-table" id="squadTable">
+          <thead><tr>
+            <th>Squad</th><th style="width:80px;">Members</th><th style="width:104px;">Fee £/mo</th><th style="width:80px;">2nd child</th><th style="width:80px;">3rd+ child</th><th style="width:64px;">Staff</th><th style="width:120px;">Monthly income</th>
+          </tr></thead>
+          <tbody>${formRowState.squads.map((s,i) => squadRowHtml(s,i)).join('')}</tbody>
+        </table>
+        <div class="repeater-foot" id="squadFoot"></div>
+      </div>
+    </div>`;
+}
+
+function recomputeSquadTable(){
+  const table = document.getElementById('squadTable');
+  if (!table) return;
+  const d2 = Number(document.getElementById('f_discount_2nd_pct')?.value || 0);
+  const d3 = Number(document.getElementById('f_discount_3rd_pct')?.value || 0);
+  let totalMembers = 0, totalStaff = 0, totalSecond = 0, totalThird = 0, totalMonthly = 0;
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const i = Number(tr.getAttribute('data-i'));
+    const s = formRowState.squads[i];
+    s.members = Number(tr.querySelector('.sq-members').value || 0);
+    s.fee = Number(tr.querySelector('.sq-fee').value || 0);
+    s.second = Number(tr.querySelector('.sq-second').value || 0);
+    s.third = Number(tr.querySelector('.sq-third').value || 0);
+    s.staff = Number(tr.querySelector('.sq-staff').value || 0);
+    const payingBase = Math.max(0, s.members - s.staff - s.second - s.third);
+    const rowMonthly = payingBase * s.fee + s.second * s.fee * (1 - d2 / 100) + s.third * s.fee * (1 - d3 / 100);
+    tr.querySelector('.sq-income').textContent = fmtGBP(rowMonthly);
+    totalMembers += s.members; totalStaff += s.staff; totalSecond += s.second; totalThird += s.third; totalMonthly += rowMonthly;
+  });
+  const foot = document.getElementById('squadFoot');
+  if (foot) foot.innerHTML =
+    `<span>${totalMembers} members · ${totalStaff} staff · ${totalSecond} on 2nd-child · ${totalThird} on 3rd+ · <span class="hint">Aug is fee-free, so annual = monthly × 11</span></span>` +
+    `<span>Monthly <b>${fmtGBP(totalMonthly)}</b> · Annual <b>${fmtGBP(totalMonthly * 11)}</b></span>`;
+}
+
+function bindSquadEvents(){
+  const table = document.getElementById('squadTable');
+  if (table) table.addEventListener('input', recomputeSquadTable);
+  ['f_discount_2nd_pct', 'f_discount_3rd_pct'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', recomputeSquadTable);
+  });
+}
+
+// ---- venue table ----------------------------------------------------------------
+
+function venueRowHtml(v, i){
+  return `<tr data-i="${i}">
+    <td><span class="rt-name">${esc(v.name)}</span><br><span class="rt-cat">${esc(v.unit || '')}</span></td>
+    <td><input type="number" step="any" min="0" class="ve-rate" value="${v.rate}"></td>
+    <td><input type="number" step="any" class="ve-inflation" value="${v.inflation}"></td>
+    <td><select class="ve-effective">${MONTHS.map(m => `<option value="${m}" ${m === v.effectiveMonth ? 'selected' : ''}>${m}</option>`).join('')}</select></td>
+  </tr>`;
+}
+
+function renderVenueSection(sec){
+  return `
+    <div class="field-group">
+      <div class="field-group-title">${esc(sec.title)}</div>
+      ${sec.hint ? `<div class="hint" style="margin-bottom:10px;">${esc(sec.hint)}</div>` : ''}
+      <div class="repeater">
+        <table class="repeater-table" id="venueTable">
+          <thead><tr><th>Venue</th><th style="width:150px;">Rate</th><th style="width:140px;">Annual inflation (%)</th><th style="width:110px;">Effective from</th></tr></thead>
+          <tbody>${formRowState.venues.map((v,i) => venueRowHtml(v,i)).join('')}</tbody>
+        </table>
+        <div class="repeater-foot" id="venueFoot"></div>
+      </div>
+    </div>`;
+}
+
+function syncVenuesFromDom(){
+  document.querySelectorAll('#venueTable tbody tr').forEach(tr => {
+    const i = Number(tr.getAttribute('data-i'));
+    formRowState.venues[i].rate = Number(tr.querySelector('.ve-rate').value || 0);
+    formRowState.venues[i].inflation = Number(tr.querySelector('.ve-inflation').value || 0);
+    formRowState.venues[i].effectiveMonth = tr.querySelector('.ve-effective').value;
+  });
+}
+
+function recomputeVenueFoot(){
+  const table = document.getElementById('venueTable');
+  if (!table) return;
+  syncVenuesFromDom();
+  const weekly = formRowState.venues.filter(v => (v.unit || '').indexOf('/wk') !== -1);
+  const flat = formRowState.venues.find(v => (v.unit || '').toLowerCase().indexOf('flat') !== -1);
+  const totalWeekly = weekly.reduce((a,v) => a + v.rate, 0);
+  const avgInflation = formRowState.venues.length ? formRowState.venues.reduce((a,v) => a + v.inflation, 0) / formRowState.venues.length : 0;
+  const foot = document.getElementById('venueFoot');
+  if (foot) foot.innerHTML =
+    `<span>Total weekly hire (${weekly.length} venues) <b>${fmtGBP(totalWeekly)}/wk</b></span>` +
+    (flat ? `<span>${esc(flat.name)} <b>${fmtGBP(flat.rate)}/mo</b></span>` : '') +
+    `<span>Avg inflation <b>${avgInflation.toFixed(1)}%</b></span>`;
+}
+
+function bindVenueEvents(){
+  const table = document.getElementById('venueTable');
+  if (table) table.addEventListener('input', recomputeVenueFoot);
+  if (table) table.addEventListener('change', recomputeVenueFoot);
+}
+
+// ---- meet table -------------------------------------------------------------
+
+function meetRowHtml(m, i){
+  return `<tr data-i="${i}">
+    <td><input type="text" class="mt-name" value="${esc(m.name)}"></td>
+    <td><select class="mt-month"><option value="" ${!m.month ? 'selected' : ''}>—</option>${MONTHS.map(mo => `<option value="${mo}" ${mo === m.month ? 'selected' : ''}>${mo}</option>`).join('')}</select></td>
+    <td><input type="number" step="any" class="mt-income" value="${m.income}"></td>
+    <td><input type="number" step="any" class="mt-poolhire" value="${m.poolHire}"></td>
+    <td><input type="number" step="any" class="mt-coach" value="${m.coachCosts}"></td>
+    <td><input type="number" step="any" class="mt-gifts" value="${m.gifts}"></td>
+    <td><input type="number" step="any" class="mt-catering" value="${m.catering}"></td>
+  </tr>`;
+}
+
+function renderMeetSection(sec){
+  return `
+    <div class="field-group">
+      <div class="field-group-title">${esc(sec.title)}</div>
+      ${sec.hint ? `<div class="hint" style="margin-bottom:10px;">${esc(sec.hint)}</div>` : ''}
+      <div class="field count-field">
+        <label for="meetCount">${esc(sec.countLabel)}</label>
+        <input type="number" min="0" step="1" id="meetCount" value="${formRowState.meets.length}">
+      </div>
+      <div class="repeater">
+        <table class="repeater-table" id="meetTable">
+          <thead><tr>
+            <th>Meet</th><th style="width:90px;">Month</th><th style="width:100px;">Income £</th><th style="width:100px;">Pool hire £</th><th style="width:110px;">Coach costs £</th><th style="width:80px;">Gifts £</th><th style="width:100px;">Catering £</th>
+          </tr></thead>
+          <tbody>${formRowState.meets.map((m,i) => meetRowHtml(m,i)).join('')}</tbody>
+        </table>
+        <div class="repeater-foot" id="meetFoot"></div>
+      </div>
+      <div class="section-note">Coach costs are driven by the coach meet planner where a coach is already assigned — enter the planned figure per meet here for now.</div>
+    </div>`;
+}
+
+function recomputeMeetFoot(){
+  const table = document.getElementById('meetTable');
+  if (!table) return;
+  let inc = 0, pool = 0, coach = 0, gifts = 0, cat = 0;
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const i = Number(tr.getAttribute('data-i'));
+    const m = formRowState.meets[i];
+    if (!m) return;
+    m.name = tr.querySelector('.mt-name').value;
+    m.month = tr.querySelector('.mt-month').value;
+    m.income = Number(tr.querySelector('.mt-income').value || 0);
+    m.poolHire = Number(tr.querySelector('.mt-poolhire').value || 0);
+    m.coachCosts = Number(tr.querySelector('.mt-coach').value || 0);
+    m.gifts = Number(tr.querySelector('.mt-gifts').value || 0);
+    m.catering = Number(tr.querySelector('.mt-catering').value || 0);
+    inc += m.income; pool += m.poolHire; coach += m.coachCosts; gifts += m.gifts; cat += m.catering;
+  });
+  const foot = document.getElementById('meetFoot');
+  if (foot) foot.innerHTML = `<span>Income <b>${fmtGBP(inc)}</b></span><span>Costs <b>${fmtGBP(pool + coach + gifts + cat)}</b></span><span>Net <b>${fmtGBP(inc - (pool + coach + gifts + cat))}</b></span>`;
+}
+
+function setMeetCount(n){
+  n = Math.max(0, Math.floor(n) || 0);
+  const cur = formRowState.meets.length;
+  if (n > cur){
+    for (let i = cur; i < n; i++) formRowState.meets.push(defaultMeetRow(i + 1));
+  } else {
+    formRowState.meets = formRowState.meets.slice(0, n);
+  }
+  const tbody = document.querySelector('#meetTable tbody');
+  if (tbody) tbody.innerHTML = formRowState.meets.map((m,i) => meetRowHtml(m,i)).join('');
+  recomputeMeetFoot();
+}
+
+function bindMeetEvents(){
+  const table = document.getElementById('meetTable');
+  if (table) table.addEventListener('input', recomputeMeetFoot);
+  if (table) table.addEventListener('change', recomputeMeetFoot);
+  const countInput = document.getElementById('meetCount');
+  if (countInput) countInput.addEventListener('change', () => setMeetCount(Number(countInput.value || 0)));
+}
+
+// ---- staff table (competitive coaches / academy staff) ----------------------
+
+function staffRowHtml(r, i){
+  const known = PAY_SCALES[(r.payCode || '').trim().toUpperCase()] !== undefined;
+  return `<tr data-i="${i}">
+    <td><input type="text" class="st-name" placeholder="Staff name" value="${esc(r.name)}"></td>
+    <td><input type="text" class="st-code" placeholder="Pay scale code" value="${esc(r.payCode)}"></td>
+    <td><input type="number" step="any" min="0" class="st-rate ${known ? 'rt-autofill' : ''}" value="${r.rate}" placeholder="£/hr"></td>
+    <td><input type="number" step="any" min="0" class="st-hours" value="${r.hours || 0}" placeholder="hrs/wk"></td>
+    <td><button type="button" class="rt-remove" data-remove="${i}" title="Remove row">✕</button></td>
+  </tr>`;
+}
+
+function renderStaffSection(sec){
+  const rows = formRowState[sec.rowsKey];
+  return `
+    <div class="field-group">
+      <div class="field-group-title">${esc(sec.title)}</div>
+      ${sec.hint ? `<div class="hint" style="margin-bottom:10px;">${esc(sec.hint)}</div>` : ''}
+      <div class="repeater">
+        <table class="repeater-table" data-rowskey="${sec.rowsKey}">
+          <thead><tr><th>Name</th><th style="width:170px;">Pay scale code</th><th style="width:110px;">Rate (£/hr)</th><th style="width:100px;">Hours/week</th><th style="width:36px;"></th></tr></thead>
+          <tbody>${rows.map((r,i) => staffRowHtml(r,i)).join('')}</tbody>
+        </table>
+        <button type="button" class="repeater-add" data-addrow="${sec.rowsKey}">+ Add staff</button>
+        <div class="section-note">Example codes: CC1–CC4 (competitive), AC1–AC3 (academy) — illustrative only, swap in the real ClubHuB pay scale table once it's available. Hours/week is used to project this coach's annual cost — leave at 0 if not yet known.</div>
+      </div>
+    </div>`;
+}
+
+function bindStaffRowRemove(rowsKey){
+  const table = document.querySelector(`table[data-rowskey="${rowsKey}"]`);
+  if (!table) return;
+  table.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.onclick = () => {
+      const i = Number(btn.getAttribute('data-remove'));
+      formRowState[rowsKey].splice(i, 1);
+      table.querySelector('tbody').innerHTML = formRowState[rowsKey].map((r,i2) => staffRowHtml(r,i2)).join('');
+      bindStaffRowRemove(rowsKey);
+    };
+  });
+}
+
+function bindStaffEvents(rowsKey){
+  const table = document.querySelector(`table[data-rowskey="${rowsKey}"]`);
+  const addBtn = document.querySelector(`.repeater-add[data-addrow="${rowsKey}"]`);
+  if (addBtn) addBtn.onclick = () => {
+    formRowState[rowsKey].push(defaultCoachRow());
+    table.querySelector('tbody').innerHTML = formRowState[rowsKey].map((r,i) => staffRowHtml(r,i)).join('');
+    bindStaffRowRemove(rowsKey);
+  };
+  bindStaffRowRemove(rowsKey);
+  if (table) table.addEventListener('input', (e) => {
+    if (!e.target.classList.contains('st-code')) return;
+    const code = e.target.value.trim().toUpperCase();
+    const tr = e.target.closest('tr');
+    const rateInput = tr.querySelector('.st-rate');
+    if (PAY_SCALES[code] !== undefined){
+      rateInput.value = PAY_SCALES[code];
+      rateInput.classList.add('rt-autofill');
+    } else {
+      rateInput.classList.remove('rt-autofill');
+    }
+  });
+}
+
+function syncStaffFromDom(rowsKey){
+  const table = document.querySelector(`table[data-rowskey="${rowsKey}"]`);
+  if (!table) return;
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const i = Number(tr.getAttribute('data-i'));
+    if (!formRowState[rowsKey][i]) return;
+    formRowState[rowsKey][i].name = tr.querySelector('.st-name').value;
+    formRowState[rowsKey][i].payCode = tr.querySelector('.st-code').value;
+    formRowState[rowsKey][i].rate = Number(tr.querySelector('.st-rate').value || 0);
+    formRowState[rowsKey][i].hours = Number(tr.querySelector('.st-hours').value || 0);
+  });
+}
+
+// ---- generic section dispatch ------------------------------------------------
+
+function renderSection(sec){
+  if (sec.type === 'squad_table') return renderSquadSection(sec);
+  if (sec.type === 'venue_table') return renderVenueSection(sec);
+  if (sec.type === 'meet_table') return renderMeetSection(sec);
+  if (sec.type === 'staff_table') return renderStaffSection(sec);
+  return `
+    <div class="field-group">
+      <div class="field-group-title">${esc(sec.title)}</div>
+      <div class="field-grid">
+        ${sec.fields.map(f => `
+          <div class="field ${f.wide ? 'wide' : ''}">
+            <label for="f_${f.key}">${esc(f.label)}</label>
+            ${f.type === 'textarea'
+              ? `<textarea id="f_${f.key}" name="${f.key}"></textarea>`
+              : `<input id="f_${f.key}" name="${f.key}" type="${f.type}" ${f.type === 'number' ? 'step="any"' : ''}>`}
+            ${f.hint ? `<span class="hint">${esc(f.hint)}</span>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+function fillFieldValues(g, values){
+  g.sections.forEach(sec => {
+    if (!sec.fields) return;
+    sec.fields.forEach(f => {
+      const el = document.getElementById('f_' + f.key);
+      if (!el) return;
+      const v = values[f.key];
+      if (v !== undefined && v !== null && v !== '') el.value = v;
+    });
+  });
+}
+
+// ---- group grid / form ----------------------------------------------------------
+
+function statusClass(status){
+  if (status === 'Approved') return 'done';
+  if (status === 'Submitted') return 'pending';
+  if (status === 'Changes Requested') return 'changes';
+  return '';
+}
+function statusLabel(status){
+  if (!status) return 'Not submitted yet';
+  if (status === 'Draft') return 'Draft saved';
+  if (status === 'Submitted') return 'Pending review';
+  if (status === 'Approved') return '✓ Approved';
+  if (status === 'Changes Requested') return 'Changes requested';
+  return status;
+}
+
+function renderGroupGrid(){
+  const grid = document.getElementById('groupGrid');
+  if (!BOOT || !BOOT.ok){ grid.innerHTML = ''; return; }
+  const allowed = BOOT.allowedGroups;
+  if (!allowed.length){
+    grid.innerHTML = `<div class="empty">You don't have any groups assigned to submit for. Contact the Treasurer if that's not right.</div>`;
+    return;
+  }
+  grid.innerHTML = GROUPS.filter(g => allowed.includes(g.id)).map(g => {
+    const st = BOOT.groupStatus[g.id];
+    return `
+    <button class="group-card ${openGroupId === g.id ? 'active' : ''}" data-group="${g.id}">
+      <span class="g-icon">${g.icon}</span>
+      <div class="g-name">${esc(g.name)}</div>
+      <div class="g-desc">${esc(g.desc)}</div>
+      <div class="g-status ${statusClass(st && st.status)}">${statusLabel(st && st.status)}${st ? ' · ' + esc(st.period) : ''}</div>
+    </button>`;
+  }).join('');
+  grid.querySelectorAll('.group-card').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openGroupId = btn.getAttribute('data-group');
+      currentPeriod = PERIODS[0];
+      renderGroupGrid();
+      loadAndRenderForm();
+    });
+  });
+}
+
+function loadAndRenderForm(){
+  const area = document.getElementById('formArea');
+  if (!openGroupId){ area.innerHTML = ''; return; }
+  area.innerHTML = '<div class="loading">Loading your saved data…</div>';
+  google.script.run
+    .withSuccessHandler(data => { renderForm(data); })
+    .withFailureHandler(err => { area.innerHTML = `<div class="banner error">${esc(err && err.message ? err.message : err)}</div>`; })
+    .getMyGroupSubmission(openGroupId, currentPeriod);
+}
+
+function applyGroupData(g, data){
+  formRowState = {};
+  if (g.id === 'membership'){
+    // Membership_Squads (the saved-submission tab) has no Category column — only Baseline_Squads
+    // does — so when reopening an already-saved submission, backfill the category for display
+    // from the baseline list already in BOOT, matched by squad name.
+    const baselineCatByName = {};
+    (BOOT.baselineSquads || []).forEach(b => { baselineCatByName[b.name] = b.cat; });
+    formRowState.squads = (data.rows.squads || []).map(s => ({ ...s, cat: s.cat || baselineCatByName[s.name] || '' }));
+  }
+  if (g.id === 'venues') formRowState.venues = (data.rows.venues || []).map(v => ({...v}));
+  if (g.id === 'meets') formRowState.meets = (data.rows.meets && data.rows.meets.length ? data.rows.meets : [defaultMeetRow(1)]).map(m => ({...m}));
+  if (g.id === 'staffing'){
+    formRowState.coaches_comp = (data.rows.coaches_comp || []).map(r => ({...r}));
+    formRowState.coaches_academy = (data.rows.coaches_academy || []).map(r => ({...r}));
+  }
+  currentSubmissionMeta = { submissionId: data.submissionId, status: data.status, reviewNotes: data.reviewNotes };
+}
+
+function renderForm(data){
+  const area = document.getElementById('formArea');
+  if (!openGroupId){ area.innerHTML = ''; return; }
+  const g = groupById(openGroupId);
+  applyGroupData(g, data);
+
+  const statusNote = data.status
+    ? `<div class="banner info">This group's current status is <b>${esc(statusLabel(data.status))}</b> for ${esc(data.period)}${data.reviewNotes ? ' — Treasurer note: “' + esc(data.reviewNotes) + '”' : ''}. Saving below updates the same submission.</div>`
+    : '';
+
+  area.innerHTML = `
+    <div class="form-card">
+      <div class="form-head">
+        <div>
+          <h3>${g.icon} ${esc(g.name)} — 2027 assumptions</h3>
+          <p>${esc(g.desc)} Fields marked with a hint are optional context for the Treasurer.</p>
+        </div>
+        <button class="form-close" type="button" id="formCloseBtn">Close ✕</button>
+      </div>
+      ${statusNote}
+      <form id="assumptionsForm">
+        <div class="period-row">
+          <label for="periodSelect">Reporting period this submission covers</label>
+          <select id="periodSelect">
+            ${PERIODS.map(p => `<option value="${p}" ${p === currentPeriod ? 'selected' : ''}>${p}</option>`).join('')}
+          </select>
+          <span class="hint">Submit once for the full year, or resubmit each quarter to true up budget vs. actual.</span>
+        </div>
+        ${g.sections.map(sec => renderSection(sec)).join('')}
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="saveDraftBtn">Save draft</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn">Submit for Treasurer review</button>
+          <span class="note">Saving a draft keeps it private to you — submitting sends it to the Treasurer. You can resubmit any time before it's approved.</span>
+        </div>
+      </form>
+    </div>
+  `;
+
+  fillFieldValues(g, data.values);
+
+  document.getElementById('formCloseBtn').addEventListener('click', () => { openGroupId = null; renderGroupGrid(); renderForm2Clear(); });
+  document.getElementById('periodSelect').addEventListener('change', (e) => { currentPeriod = e.target.value; loadAndRenderForm(); });
+
+  if (g.id === 'membership'){ bindSquadEvents(); recomputeSquadTable(); }
+  if (g.id === 'venues'){ bindVenueEvents(); recomputeVenueFoot(); }
+  if (g.id === 'meets'){ bindMeetEvents(); recomputeMeetFoot(); }
+  if (g.id === 'staffing'){ bindStaffEvents('coaches_comp'); bindStaffEvents('coaches_academy'); }
+
+  document.getElementById('saveDraftBtn').addEventListener('click', () => submitGroupForm(g, 'draft'));
+  document.getElementById('assumptionsForm').addEventListener('submit', (e) => { e.preventDefault(); submitGroupForm(g, 'submit'); });
+}
+
+function renderForm2Clear(){ document.getElementById('formArea').innerHTML = ''; }
+
+function collectGroupPayload(g){
+  const fd = new FormData(document.getElementById('assumptionsForm'));
+  const values = {};
+  g.sections.forEach(sec => {
+    if (!sec.fields) return;
+    sec.fields.forEach(f => {
+      const v = fd.get(f.key);
+      values[f.key] = f.type === 'number' ? Number(v || 0) : (v || '');
+    });
+  });
+  const rows = {};
+
+  if (g.id === 'membership'){
+    recomputeSquadTable();
+    rows.squads = formRowState.squads.map(s => ({ ...s }));
+  }
+  if (g.id === 'venues'){
+    syncVenuesFromDom();
+    rows.venues = formRowState.venues.map(v => ({ ...v, notes: values.midyear_notes || '' }));
+  }
+  if (g.id === 'meets'){
+    recomputeMeetFoot();
+    rows.meets = formRowState.meets.map(m => ({ ...m }));
+  }
+  if (g.id === 'staffing'){
+    syncStaffFromDom('coaches_comp');
+    syncStaffFromDom('coaches_academy');
+    rows.coaches_comp = formRowState.coaches_comp.filter(r => r.name).map(r => ({ ...r }));
+    rows.coaches_academy = formRowState.coaches_academy.filter(r => r.name).map(r => ({ ...r }));
+  }
+
+  return { values, rows };
+}
+
+function submitGroupForm(g, mode){
+  const payload = collectGroupPayload(g);
+  const saveBtn = document.getElementById('saveDraftBtn');
+  const submitBtn = document.getElementById('submitBtn');
+  saveBtn.disabled = true; submitBtn.disabled = true;
+  const fn = mode === 'submit' ? 'submitForReview' : 'saveDraft';
+  google.script.run
+    .withSuccessHandler(res => {
+      const area = document.getElementById('formArea');
+      const msg = mode === 'submit'
+        ? `✓ Sent to the Treasurer for review — ${g.name}'s numbers are now pending sign-off.`
+        : `✓ Draft saved for ${g.name}. It's private to you until you submit it.`;
+      openGroupId = g.id;
+      loadAndRenderForm();
+      refreshBootstrapCounts();
+      area.insertAdjacentHTML('afterbegin', `<div class="toast">${esc(msg)}</div>`);
+    })
+    .withFailureHandler(err => {
+      saveBtn.disabled = false; submitBtn.disabled = false;
+      const area = document.getElementById('formArea');
+      area.insertAdjacentHTML('afterbegin', `<div class="toast err">${esc(err && err.message ? err.message : err)}</div>`);
+    })
+    [fn](g.id, currentPeriod, payload);
+}
+
+function refreshBootstrapCounts(){
+  google.script.run.withSuccessHandler(data => {
+    if (!data.ok) return;
+    BOOT = data;
+    document.getElementById('pendingCount').textContent = data.pendingReviewCount || 0;
+    renderGroupGrid();
+  }).getBootstrapData();
+}
+
+// ---- master 2027 budget panel -----------------------------------------------
+
+function loadMasterStatus(){
+  const el = document.getElementById('masterStatus');
+  if (!el) return;
+  el.textContent = 'Loading…';
+  google.script.run
+    .withSuccessHandler(renderMasterStatus)
+    .withFailureHandler(err => { el.innerHTML = `<span class="banner error">${esc(err && err.message ? err.message : err)}</span>`; })
+    .getMasterTabStatus();
+}
+
+function renderMasterStatus(s){
+  const el = document.getElementById('masterStatus');
+  if (!el) return;
+  const publishBtn = document.getElementById('publishBudgetBtn');
+  let html = '';
+  if (!s.exists){
+    html = 'No Master_2027 tab yet — click "Recalculate" to create it from whatever\'s currently Approved.';
+  } else {
+    html = s.lastRefreshedAt
+      ? `Last recalculated ${esc(s.lastRefreshedAt)}${s.lastRefreshedByName ? ' by ' + esc(s.lastRefreshedByName) : ''}.`
+      : 'Master_2027 tab exists but has not been recalculated yet.';
+    html += `<br>Status: <b>${esc(s.liveStatus || 'Draft')}</b>`;
+    if (s.liveStatus === 'Published' && s.publishedAt){
+      html += ` — published ${esc(s.publishedAt)}${s.publishedByName ? ' by ' + esc(s.publishedByName) : ''}.`;
+    }
+  }
+  el.innerHTML = html;
+  if (publishBtn) publishBtn.textContent = (s.liveStatus === 'Published') ? 'Re-publish as live 2027 budget' : 'Publish as live 2027 budget';
+}
+
+function setupMasterPanelButtons(){
+  const refreshBtn = document.getElementById('refreshMasterBtn');
+  const publishBtn = document.getElementById('publishBudgetBtn');
+  const msg = document.getElementById('masterActionMsg');
+  if (refreshBtn) refreshBtn.onclick = () => {
+    refreshBtn.disabled = true;
+    if (msg) msg.innerHTML = '';
+    google.script.run
+      .withSuccessHandler(() => { refreshBtn.disabled = false; if (msg) msg.innerHTML = '<span class="banner success">Master_2027 tab recalculated.</span>'; loadMasterStatus(); })
+      .withFailureHandler(err => { refreshBtn.disabled = false; if (msg) msg.innerHTML = `<span class="banner error">${esc(err && err.message ? err.message : err)}</span>`; })
+      .refreshMasterTab();
+  };
+  if (publishBtn) publishBtn.onclick = () => {
+    if (!confirm('Mark the current Master_2027 tab as the live 2027 budget?')) return;
+    publishBtn.disabled = true;
+    if (msg) msg.innerHTML = '';
+    google.script.run
+      .withSuccessHandler(() => { publishBtn.disabled = false; if (msg) msg.innerHTML = '<span class="banner success">Published as the live 2027 budget.</span>'; loadMasterStatus(); })
+      .withFailureHandler(err => { publishBtn.disabled = false; if (msg) msg.innerHTML = `<span class="banner error">${esc(err && err.message ? err.message : err)}</span>`; })
+      .publishLiveBudget();
+  };
+}
+
+// ---- review queue ---------------------------------------------------------------
+
+function loadQueue(){
+  document.getElementById('queueList').innerHTML = '<div class="loading">Loading submissions…</div>';
+  google.script.run
+    .withSuccessHandler(data => { queueCache = data; renderQueue(); })
+    .withFailureHandler(err => { document.getElementById('queueList').innerHTML = `<div class="banner error">${esc(err && err.message ? err.message : err)}</div>`; })
+    .getReviewQueue();
+}
+
+function fieldLabel(groupId, key){
+  const g = groupById(groupId);
+  if (!g) return key;
+  for (const sec of g.sections){
+    if (!sec.fields) continue;
+    for (const f of sec.fields) if (f.key === key) return f.label;
+  }
+  return key;
+}
+
+function renderDetailFields(detail){
+  const entries = Object.entries(detail.values || {}).filter(([k,v]) => v !== '' && v !== null && v !== undefined);
+  if (!entries.length) return '';
+  return `<div class="sub-fields">
+    ${entries.map(([k,v]) => `
+      <div class="sub-field">
+        <div class="sfl">${esc(fieldLabel(detail.groupId, k))}</div>
+        <div class="sfv num">${typeof v === 'number' ? v.toLocaleString('en-GB') : esc(v)}</div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function renderDetailRows(detail){
+  const rows = detail.rows || {};
+  let html = '';
+  if (rows.squads && rows.squads.length){
+    html += `<div class="sub-rows-title">Squads (${rows.squads.length})</div>` +
+      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Squad</th><th>Members</th><th>Fee</th><th>2nd</th><th>3rd+</th><th>Staff</th></tr></thead><tbody>` +
+      rows.squads.map(sq => `<tr><td>${esc(sq.name)}</td><td class="num">${sq.members}</td><td class="num">£${sq.fee}</td><td class="num">${sq.second}</td><td class="num">${sq.third}</td><td class="num">${sq.staff}</td></tr>`).join('') +
+      `</tbody></table></div>`;
+  }
+  if (rows.venues && rows.venues.length){
+    html += `<div class="sub-rows-title">Venues</div>` +
+      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Venue</th><th>Rate</th><th>Inflation</th><th>Effective from</th></tr></thead><tbody>` +
+      rows.venues.map(v => `<tr><td>${esc(v.name)}</td><td class="num">£${Number(v.rate||0).toLocaleString('en-GB')} ${esc(v.unit||'')}</td><td class="num">${v.inflation}%</td><td class="num">${esc(v.effectiveMonth || '—')}</td></tr>`).join('') +
+      `</tbody></table></div>`;
+  }
+  if (rows.meets && rows.meets.length){
+    html += `<div class="sub-rows-title">Meets (${rows.meets.length})</div>` +
+      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Meet</th><th>Month</th><th>Income</th><th>Pool hire</th><th>Coach</th><th>Gifts</th><th>Catering</th></tr></thead><tbody>` +
+      rows.meets.map(m => `<tr><td>${esc(m.name)}</td><td>${esc(m.month || '—')}</td><td class="num">£${Number(m.income||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.poolHire||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.coachCosts||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.gifts||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.catering||0).toLocaleString('en-GB')}</td></tr>`).join('') +
+      `</tbody></table></div>`;
+  }
+  if (rows.coaches_comp && rows.coaches_comp.length){
+    html += `<div class="sub-rows-title">Competitive coaches</div>` +
+      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Name</th><th>Pay scale code</th><th>Rate</th><th>Hours/wk</th></tr></thead><tbody>` +
+      rows.coaches_comp.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.payCode || '—')}</td><td class="num">£${r.rate}/hr</td><td class="num">${r.hours || 0}</td></tr>`).join('') +
+      `</tbody></table></div>`;
+  }
+  if (rows.coaches_academy && rows.coaches_academy.length){
+    html += `<div class="sub-rows-title">Academy staff</div>` +
+      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Name</th><th>Pay scale code</th><th>Rate</th><th>Hours/wk</th></tr></thead><tbody>` +
+      rows.coaches_academy.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.payCode || '—')}</td><td class="num">£${r.rate}/hr</td><td class="num">${r.hours || 0}</td></tr>`).join('') +
+      `</tbody></table></div>`;
+  }
+  return html;
+}
+
+function renderQueue(){
+  const list = document.getElementById('queueList');
+  if (!queueCache){ list.innerHTML = ''; return; }
+  document.getElementById('qPending').textContent = queueCache.pending;
+  document.getElementById('qApproved').textContent = queueCache.approved;
+  document.getElementById('qTotal').textContent = queueCache.total;
+
+  if (!queueCache.items.length){
+    list.innerHTML = `<div class="empty">No groups have submitted their 2027 assumptions yet. Once they do, submissions will queue up here for review.</div>`;
+    return;
+  }
+
+  list.innerHTML = queueCache.items.map(s => {
+    const g = groupById(s.groupId);
+    const chipClass = s.status === 'Submitted' ? 'pending' : (s.status === 'Approved' ? 'approved' : (s.status === 'Changes Requested' ? 'changes' : 'draft'));
+    const metaBits = [s.period, s.submittedByName, s.submittedAt].filter(Boolean);
+    const detail = detailCache[s.submissionId];
+    const expanded = !!(detail && detail.__expanded);
+    return `
+    <div class="submission" data-id="${esc(s.submissionId)}">
+      <div class="sub-head" data-toggle="${esc(s.submissionId)}">
+        <div>
+          <div class="sub-id">${esc(s.submissionId)}</div>
+          <div class="sub-title">${g ? g.icon + ' ' + esc(g.name) : esc(s.groupLabel)}</div>
+          <div class="sub-meta">${metaBits.map(esc).join(' · ')}</div>
+        </div>
+        <span class="status-chip ${chipClass}">${esc(statusLabel(s.status))}</span>
+      </div>
+      <div class="sub-body" id="body_${esc(s.submissionId)}" ${expanded ? '' : 'hidden'}>
+        ${expanded ? renderQueueDetailBody(s, detail) : '<div class="loading">Loading…</div>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-toggle]').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.getAttribute('data-toggle');
+      const body = document.getElementById('body_' + id);
+      const nowHidden = !body.hidden;
+      body.hidden = nowHidden;
+      if (!nowHidden && !detailCache[id]){
+        google.script.run
+          .withSuccessHandler(detail => {
+            detail.__expanded = true;
+            detailCache[id] = detail;
+            renderQueue();
+          })
+          .withFailureHandler(err => {
+            body.innerHTML = `<div class="banner error">${esc(err && err.message ? err.message : err)}</div>`;
+          })
+          .getSubmissionDetail(id);
+      } else if (!nowHidden && detailCache[id]){
+        detailCache[id].__expanded = true;
+      } else if (nowHidden && detailCache[id]){
+        detailCache[id].__expanded = false;
+      }
+    });
+  });
+
+  list.querySelectorAll('[data-decide]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = el.getAttribute('data-decide');
+      const decision = el.getAttribute('data-decision');
+      const wrap = el.closest('.sub-actions').querySelector('.decide-notes textarea');
+      const notes = wrap ? wrap.value : '';
+      el.disabled = true;
+      const fn = decision === 'approve' ? 'approveSubmission' : 'requestChanges';
+      google.script.run
+        .withSuccessHandler(() => {
+          delete detailCache[id];
+          loadQueue();
+          refreshBootstrapCounts();
+        })
+        .withFailureHandler(err => {
+          el.disabled = false;
+          const body = document.getElementById('body_' + id);
+          body.insertAdjacentHTML('afterbegin', `<div class="toast err">${esc(err && err.message ? err.message : err)}</div>`);
+        })
+        [fn](id, notes);
+    });
+  });
+}
+
+function renderQueueDetailBody(s, detail){
+  let html = renderDetailFields(detail) + renderDetailRows(detail);
+  if (detail.status === 'Submitted'){
+    if (detail.canDecide){
+      html += `
+        <div class="decide-notes"><textarea placeholder="Optional note for the submitting group (required if requesting changes)"></textarea></div>
+        <div class="sub-actions">
+          <button class="btn btn-approve" data-decide="${esc(s.submissionId)}" data-decision="approve">Approve</button>
+          <button class="btn btn-decline" data-decide="${esc(s.submissionId)}" data-decision="changes">Request changes</button>
+        </div>`;
+    } else if (detail.blockedBySoD){
+      html += `<div class="sub-actions"><span class="sod-note">Segregation of duties is enabled — you submitted this yourself, so another Admin or Treasurer login needs to review it.</span></div>`;
+    } else {
+      html += `<div class="sub-actions"><span class="note">Only Admin or Treasurer can decide on submissions.</span></div>`;
+    }
+  } else {
+    const note = detail.status === 'Approved' ? 'Approved.' : (detail.status === 'Changes Requested' ? 'Sent back to the group for another pass.' : 'Still a draft — not yet submitted for review.');
+    html += `<div class="sub-actions"><span class="note">${esc(note)}${detail.reviewNotes ? ' Note: “' + esc(detail.reviewNotes) + '”' : ''}</span></div>`;
+  }
+  return html;
+}
+
+// ---- tabs ---------------------------------------------------------------------
+
+function setupTabs(){
+  const buttons = document.querySelectorAll('.viewtabs button');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.hidden) return;
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const view = btn.getAttribute('data-view');
+      document.getElementById('submitView').hidden = view !== 'submit';
+      document.getElementById('reviewView').hidden = view !== 'review';
+      if (view === 'review') { loadQueue(); loadMasterStatus(); }
+    });
+  });
+}
+
+boot();
+</script>
