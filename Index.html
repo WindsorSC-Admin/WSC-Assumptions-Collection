@@ -461,7 +461,7 @@ function applyFooter(settings){
 
 // ---- row-state helpers (squads / venues / meets / coaches) --------------------
 
-function defaultMeetRow(i){ return { name: 'Meet ' + i, month: '', income: 0, poolHire: 0, coachCosts: 0, gifts: 0, catering: 0 }; }
+function defaultMeetRow(i){ return { name: 'Meet ' + i, month: '', income: 0, poolHire: 0, coachCosts: 0, gifts: 0, catering: 0, roomHire: 0, parkingPermits: 0 }; }
 function defaultCoachRow(){ return { name: '', payCode: '', rate: 0, hours: 0 }; }
 
 // ---- squad table (membership) --------------------------------------------------
@@ -596,6 +596,8 @@ function meetRowHtml(m, i){
     <td><input type="number" step="any" class="mt-coach" value="${m.coachCosts}"></td>
     <td><input type="number" step="any" class="mt-gifts" value="${m.gifts}"></td>
     <td><input type="number" step="any" class="mt-catering" value="${m.catering}"></td>
+    <td><input type="number" step="any" class="mt-roomhire" value="${m.roomHire || 0}"></td>
+    <td><input type="number" step="any" class="mt-parking" value="${m.parkingPermits || 0}"></td>
   </tr>`;
 }
 
@@ -611,7 +613,7 @@ function renderMeetSection(sec){
       <div class="repeater">
         <table class="repeater-table" id="meetTable">
           <thead><tr>
-            <th>Meet</th><th style="width:90px;">Month</th><th style="width:100px;">Income £</th><th style="width:100px;">Pool hire £</th><th style="width:110px;">Coach costs £</th><th style="width:80px;">Gifts £</th><th style="width:100px;">Catering £</th>
+            <th>Meet</th><th style="width:90px;">Month</th><th style="width:100px;">Income £</th><th style="width:100px;">Pool hire £</th><th style="width:110px;">Coach costs £</th><th style="width:80px;">Gifts £</th><th style="width:100px;">Catering £</th><th style="width:100px;">Room hire £</th><th style="width:110px;">Parking permits £</th>
           </tr></thead>
           <tbody>${formRowState.meets.map((m,i) => meetRowHtml(m,i)).join('')}</tbody>
         </table>
@@ -624,7 +626,7 @@ function renderMeetSection(sec){
 function recomputeMeetFoot(){
   const table = document.getElementById('meetTable');
   if (!table) return;
-  let inc = 0, pool = 0, coach = 0, gifts = 0, cat = 0;
+  let inc = 0, pool = 0, coach = 0, gifts = 0, cat = 0, roomHire = 0, parking = 0;
   table.querySelectorAll('tbody tr').forEach(tr => {
     const i = Number(tr.getAttribute('data-i'));
     const m = formRowState.meets[i];
@@ -636,10 +638,13 @@ function recomputeMeetFoot(){
     m.coachCosts = Number(tr.querySelector('.mt-coach').value || 0);
     m.gifts = Number(tr.querySelector('.mt-gifts').value || 0);
     m.catering = Number(tr.querySelector('.mt-catering').value || 0);
-    inc += m.income; pool += m.poolHire; coach += m.coachCosts; gifts += m.gifts; cat += m.catering;
+    m.roomHire = Number(tr.querySelector('.mt-roomhire').value || 0);
+    m.parkingPermits = Number(tr.querySelector('.mt-parking').value || 0);
+    inc += m.income; pool += m.poolHire; coach += m.coachCosts; gifts += m.gifts; cat += m.catering; roomHire += m.roomHire; parking += m.parkingPermits;
   });
   const foot = document.getElementById('meetFoot');
-  if (foot) foot.innerHTML = `<span>Income <b>${fmtGBP(inc)}</b></span><span>Costs <b>${fmtGBP(pool + coach + gifts + cat)}</b></span><span>Net <b>${fmtGBP(inc - (pool + coach + gifts + cat))}</b></span>`;
+  const meetCostsTotal = pool + coach + gifts + cat + roomHire + parking;
+  if (foot) foot.innerHTML = `<span>Income <b>${fmtGBP(inc)}</b></span><span>Costs <b>${fmtGBP(meetCostsTotal)}</b></span><span>Net <b>${fmtGBP(inc - meetCostsTotal)}</b></span>`;
 }
 
 function setMeetCount(n){
@@ -1079,8 +1084,8 @@ function renderDetailRows(detail){
   }
   if (rows.meets && rows.meets.length){
     html += `<div class="sub-rows-title">Meets (${rows.meets.length})</div>` +
-      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Meet</th><th>Month</th><th>Income</th><th>Pool hire</th><th>Coach</th><th>Gifts</th><th>Catering</th></tr></thead><tbody>` +
-      rows.meets.map(m => `<tr><td>${esc(m.name)}</td><td>${esc(m.month || '—')}</td><td class="num">£${Number(m.income||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.poolHire||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.coachCosts||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.gifts||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.catering||0).toLocaleString('en-GB')}</td></tr>`).join('') +
+      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Meet</th><th>Month</th><th>Income</th><th>Pool hire</th><th>Coach</th><th>Gifts</th><th>Catering</th><th>Room hire</th><th>Parking</th></tr></thead><tbody>` +
+      rows.meets.map(m => `<tr><td>${esc(m.name)}</td><td>${esc(m.month || '—')}</td><td class="num">£${Number(m.income||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.poolHire||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.coachCosts||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.gifts||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.catering||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.roomHire||0).toLocaleString('en-GB')}</td><td class="num">£${Number(m.parkingPermits||0).toLocaleString('en-GB')}</td></tr>`).join('') +
       `</tbody></table></div>`;
   }
   if (rows.coaches_comp && rows.coaches_comp.length){

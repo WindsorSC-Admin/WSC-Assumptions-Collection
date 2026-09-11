@@ -146,6 +146,8 @@ one field, no crash, until you add the column):
 | `Membership_Discounts` | `Notes` | "Expected joiners/leavers or fee changes" textarea |
 | `Coaching_CompetitiveCoaches` | `Hours/week` | Added 10 Sept for the Master 2027 tab (§8) — each coach's typical weekly hours, used with their hourly rate to project their annual cost |
 | `Coaching_AcademyStaff` | `Hours/week` | Same as above, for academy staff |
+| `MeetTeam_Meets` | `Room Hire` | Added 10 Sept — Matt confirmed meets can carry room-hire costs beyond gifts/catering; rolls into the Ledger's "Meet Costs" line alongside Gifts + Catering |
+| `MeetTeam_Meets` | `Parking Permits` | Added 10 Sept — same reason, for parking permit costs at away meets |
 
 `GeneralAdmin_Fields` already has its `Notes` column in your schema, so nothing to add there.
 
@@ -220,9 +222,10 @@ there:
   investment, the 6 real venues' pool costs (rate × the real "weeks in month" calendar from
   your own 2026 Pool Hire tab — Aug = 0), Comp/Academy Coaches (rate × Hours/week × the same
   calendar), WSC Open Meets Income / Club Champs Income (split by whether a meet's name
-  contains "champs"), Meet Pool Hire, and — new judgement call — **Coach Meet Costs** (each
-  meet's own Coach Costs field) and **Meet Costs** (each meet's Gifts + Catering combined).
-  Flag it if that "Meet Costs" reading isn't what you meant.
+  contains "champs"), Meet Pool Hire, **Coach Meet Costs** (each meet's own Coach Costs
+  field — confirmed correct, 10 Sept) and **Meet Costs** (confirmed 10 Sept as "combined
+  meet costs" — each meet's Gifts + Catering + Room Hire + Parking Permits added together;
+  the latter two are new fields, added the same day, since meets can carry those costs too).
 - **Manual** (type straight into the Master_2027 tab, always preserved): Other income,
   Clothing income, Spectator Fee, LT Equipment hire, Coach Meet Expenses, Coach Meet Passes,
   L1/L2 Coach Courses, Coach/Assistant Course, Lifeguard Course, S&C, Lifeguard Cover

@@ -85,7 +85,9 @@ var GROUP_DEFS = {
           { field: 'poolHire', col: 'Pool Hire', type: 'number' },
           { field: 'coachCosts', col: 'Coach Costs', type: 'number' },
           { field: 'gifts', col: 'Gifts', type: 'number' },
-          { field: 'catering', col: 'Catering', type: 'number' }
+          { field: 'catering', col: 'Catering', type: 'number' },
+          { field: 'roomHire', col: 'Room Hire', type: 'number' }, // EXTRA column, added 10 Sept — see BRIEFING.md §4
+          { field: 'parkingPermits', col: 'Parking Permits', type: 'number' } // EXTRA column, added 10 Sept
         ]
       }
     ]
@@ -219,9 +221,12 @@ var OPTIONAL_TABS = ['Baseline_Squads', 'Baseline_Venues'];
 //    manual — a v1 improvement, since the data's already being collected.
 //    Coach Meet Expenses / Coach Meet Passes stay manual (the form doesn't
 //    split those out).
-// 4. Meet Costs is now AUTO too — read as each meet's Gifts + Catering
-//    combined. Flag this to Matt if that's not what "Meet Costs" should
-//    mean; it's an assumption, not something he confirmed directly.
+// 4. Meet Costs is AUTO — confirmed by Matt, 10 Sept, as "combined meet
+//    costs" — read as each meet's Gifts + Catering + Room Hire + Parking
+//    Permits added together. The latter two are new fields (added 10 Sept,
+//    per Matt's flag that meets can also carry venue room-hire and parking
+//    permit costs beyond gifts/catering) — see GROUP_DEFS above and
+//    BRIEFING.md §4 for the two new "extra" columns to add to the Sheet.
 // 5. Comp/Academy Coaches costs need the new Hours/week field (see
 //    GROUP_DEFS above) — a coach row with no hours entered contributes £0,
 //    it won't error.
@@ -741,7 +746,7 @@ function getMyGroupSubmission(groupId, period) {
     }
     if (groupId === 'meets') {
       result.rows.meets = [1, 2, 3].map(function (i) {
-        return { name: 'Meet ' + i, month: '', income: 0, poolHire: 0, coachCosts: 0, gifts: 0, catering: 0 };
+        return { name: 'Meet ' + i, month: '', income: 0, poolHire: 0, coachCosts: 0, gifts: 0, catering: 0, roomHire: 0, parkingPermits: 0 };
       });
     }
     if (groupId === 'staffing') {
@@ -1110,7 +1115,7 @@ function computeMasterLines_() {
     });
   }
 
-  // --- Meet Team: Novice gala, per-meet income/pool hire/coach costs/gifts+catering ---
+  // --- Meet Team: Novice gala, per-meet income/pool hire/coach costs/meet costs ---
   if (meetsData) {
     var gCount = Number(meetsData.values.novice_gala_count || 0);
     var gFee = Number(meetsData.values.novice_gala_fee || 0);
@@ -1122,7 +1127,8 @@ function computeMasterLines_() {
       addToMonth_(lines[isChamps ? 'Club Champs Income' : 'WSC Open Meets Income'], mIdx, Number(mt.income || 0));
       addToMonth_(lines['Meet Pool Hire'], mIdx, -Math.abs(Number(mt.poolHire || 0)));
       addToMonth_(lines['Coach Meet Costs'], mIdx, -Math.abs(Number(mt.coachCosts || 0)));
-      addToMonth_(lines['Meet Costs'], mIdx, -Math.abs(Number(mt.gifts || 0)) - Math.abs(Number(mt.catering || 0)));
+      var meetCostsTotal = Number(mt.gifts || 0) + Number(mt.catering || 0) + Number(mt.roomHire || 0) + Number(mt.parkingPermits || 0);
+      addToMonth_(lines['Meet Costs'], mIdx, -Math.abs(meetCostsTotal));
     });
   }
 
