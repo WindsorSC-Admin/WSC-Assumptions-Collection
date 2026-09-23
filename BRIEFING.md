@@ -199,6 +199,66 @@ longer read or written — replaced by `Number of Coaches` × `Coach Hours` abov
 automatically at the National Minimum Wage rate rather than typed in. Safe to leave the old
 column as-is or delete it.
 
+## 4b. 23 Sept — Phase 1 build: your full form-review restructure
+
+This is the build from your section-by-section review (see
+`claude/Assumptions-to-Ledger-Mapping.md`, "Update, 23 Sept (part 4)" for the full
+reasoning). It touches every group except Treasurer's salaried-roles/income
+sections. **Easiest way to get the exact Sheet checklist: push this code, then
+Run → `checkSetup` from the Apps Script editor** — it diffs every tab/column this
+version of the code expects against what's actually in the Sheet and logs exactly
+what's missing, tab by tab. That's more reliable than a hand-typed list here
+because it checks against the Sheet as it actually is today, not as I last saw it.
+
+The high-level structural changes, so the checkSetup log makes sense:
+
+- **Meet Team** — Novice galas folded into the meet table (a meet counts as a
+  Novice Gala if its name contains "Novice", Club Champs if it contains "Champs").
+  Trophies/Medals/Rosettes moved in from Treasurer as a flat field.
+- **Pool & Venues** — new **August Weeks (override)** column on `PoolVenues` (all
+  venues default to 0 weeks/no cost in August; only WLC needs a real override).
+  New **`PoolVenues_Lifeguards`** tab (Venue / Number of Lifeguards / Rate) —
+  seeded one row per venue, collected as assumptions only, not yet wired into a
+  Ledger line.
+- **Coaching & Staffing** — new **Notes** column on `Coaching_CompetitiveCoaches`
+  and `Coaching_AcademyStaff`. New **`Coaching_Development`** tab replacing the
+  flat CPD Budget field — 4 fixed rows (L2/L1/Coach-Assistant/Lifeguard courses,
+  moved in from Treasurer) plus any extra "other" rows the Head Coach adds, which
+  roll into the general CPD line.
+- **Membership** — `Membership_Squads`' `Fee` column effectively splits into
+  **Training Fee** and **Membership Fee** (£2), so discounts apply to the
+  training fee only. 2nd-child discount removed; new 3rd/4th-child and Staff
+  discount columns (Staff defaults to 100% so existing behaviour doesn't
+  silently change); new Boarding (Term)/Boarding (Non-Term)/Teacher-Coach count
+  columns, discounted at fixed rates (37% / 70% / 100% off training fee — club
+  policy, hardcoded, not editable in the form).
+  **Flag:** under the new formula, a staff member (or anyone else on a
+  training-fee discount) still pays the £2 Membership Fee in full — previously
+  100%-discounted staff paid nothing at all. This follows the rule you gave
+  ("discount is off the training fee, not the membership fee"), but it is a real
+  change from what the live Sheet/app does today, worth a sanity-check against
+  actual staff numbers before you trust the first Master_2027 recalculation.
+- **General Admin** — ASA Affiliation Fee replaced with **swimmer rate ×
+  headcount** (headcount pulled automatically from Membership's squad totals)
+  plus **volunteer rate × volunteer headcount** (ASA Volunteer Fees, moved in
+  from Treasurer). New **`GeneralAdmin_Software`** and **`GeneralAdmin_Kit`**
+  tabs (both simple Name/Category + Cost add-a-row tables) replacing the old flat
+  Software and Kit Budget fields — Kit starts pre-seeded with Staff/Volunteers/
+  Finals rows. This also fixes a latent bug: the old flat Software figure was
+  saved but never actually fed into any Ledger line — it now correctly feeds
+  "Club Sundries Admin, Software".
+- **Treasurer** — the 7 fields above (L2/L1/Coach-Assistant/Lifeguard courses,
+  Trophies/Medals/Rosettes, ASA Volunteer Fees, Club Sundries Admin/Software)
+  are removed from this group's form and `computeMasterLines_` — they're
+  computed from their new home group instead, so nothing double-counts. This
+  group otherwise stays exactly as-is for now (Phase 1) — merging it into
+  General Admin with per-line assignment is the plan for the future ClubHuB
+  migration (Phase 2), not part of this build.
+
+Nothing here removes old columns from the Sheet automatically — same housekeeping
+approach as before: the 7 fields Treasurer no longer uses are safe to leave on
+`Treasurer_Fields` as-is (unused, no crash) or delete, your call.
+
 ## 5. Judgement calls to double-check
 
 1. **RESOLVED 11 Sept — was: `Coaching_Fields`' "Employees Count" column held a £ total, not a

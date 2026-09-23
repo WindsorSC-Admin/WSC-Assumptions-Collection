@@ -335,22 +335,29 @@ const GROUPS = [
   {
     id: 'meets', icon: '🏊', name: 'Meet Team', desc: 'Hosted-meet income, entry fees, and meet-day costs.',
     sections: [
-      { title: 'Novice galas', fields: [
-        { key: 'novice_gala_count', label: 'Novice galas — number planned', type: 'number' },
-        { key: 'novice_gala_fee', label: 'Novice gala entry fee (£/swimmer)', type: 'number' },
+      { title: 'Meets/Galas hosted', type: 'meet_table', countLabel: 'Number of meets/galas hosted',
+        hint: 'Covers Open Meets, Club Championships, Novice Galas and League Events — one row per meet/gala. Income and costs here feed the Meets/Novice/Club Champs income lines and Pool/Meet Costs in the ledger. A meet is treated as a Novice Gala if its name contains "Novice", and Club Champs if its name contains "Champs" — otherwise it counts as an Open/League meet.' },
+      { title: 'Awards', fields: [
+        { key: 'trophies_medals_rosettes', label: 'Trophies, medals, rosettes (£/yr)', type: 'number' },
       ]},
-      { title: 'Open meets hosted', type: 'meet_table', countLabel: 'Number of open meets hosted',
-        hint: 'Set the count, then fill in each meet — income and costs here feed Meets income/cost and Pool Costs in the ledger. Include Club Champs here too (novice galas have their own fields above).' },
       { title: 'Away fixtures', fields: [
         { key: 'away_meet_notes', label: 'Away-meet costs — any change vs. this year?', type: 'textarea', wide: true, hint: 'Coach travel, entry passes, expenses — trending up/down and why' },
       ]},
     ],
   },
   {
-    id: 'venues', icon: '🏟️', name: 'Pool & Venues', desc: 'Per-venue hire rates and expected inflation.',
+    id: 'venues', icon: '🏟️', name: 'Pool & Venues', desc: 'Per-venue hire rates, inflation and lifeguard requirements.',
     sections: [
       { title: 'Venue rates & inflation', type: 'venue_table',
         hint: 'Each venue gets its own expected annual inflation — rates and increases vary venue to venue.' },
+      { title: 'Lifeguard requirements', type: 'generic_repeater', rowsKey: 'lifeguards', fixedRows: true,
+        readOnlyFields: ['venue'],
+        columns: [
+          { field: 'venue', label: 'Venue', type: 'text' },
+          { field: 'numLifeguards', label: 'Number of Lifeguards', type: 'number', width: 150 },
+          { field: 'rate', label: 'Rate (£/hr)', type: 'number', width: 110 }
+        ],
+        hint: 'Lifeguards are provided by the pool operators, not the club — tracked here for cost visibility only.' },
       { title: 'Known changes', fields: [
         { key: 'midyear_notes', label: 'Any confirmed mid-year rate changes?', type: 'textarea', wide: true, hint: 'Venue, month it takes effect, new rate' },
       ]},
@@ -363,8 +370,17 @@ const GROUPS = [
         hint: 'One row per person. Enter a pay scale code to auto-fill the rate, or type an hourly rate directly.' },
       { title: 'Academy staff', type: 'staff_table', rowsKey: 'coaches_academy',
         hint: 'Same as competitive coaches — pay scale code auto-fills the rate where recognised, hourly rate otherwise.' },
-      { title: 'Development', fields: [
-        { key: 'cpd_budget', label: 'CPD & course budget for the year (£)', type: 'number' },
+      { title: 'Development', type: 'generic_repeater', rowsKey: 'development', protectedRows: 4,
+        protectedLabelField: 'label', protectedLabelKey: 'kind',
+        protectedLabelMap: { l2: 'L2 Coach Course', l1: 'L1 Coach Course', coachAssistant: 'Coach/Assistant Course', lifeguard: 'Lifeguard Course' },
+        columns: [
+          { field: 'label', label: 'Course / CPD / Other', type: 'text', placeholder: 'e.g. County Development Day' },
+          { field: 'number', label: 'Number', type: 'number', width: 90 },
+          { field: 'costPerCourse', label: 'Cost per course (£)', type: 'number', width: 150 }
+        ],
+        computedCol: { label: 'Total (£)', fn: r => Number(r.number || 0) * Number(r.costPerCourse || 0) },
+        hint: 'L2/L1/Coach-Assistant/Lifeguard courses are fixed rows below — just enter the number and cost per course for each. Add extra rows for any other CPD/training; those feed the general CPD budget line.' },
+      { title: 'Notes', fields: [
         { key: 'staffing_notes', label: 'New hires, leavers, or rate changes to flag?', type: 'textarea', wide: true },
       ]},
     ],
@@ -373,24 +389,37 @@ const GROUPS = [
     id: 'membership', icon: '👥', name: 'Membership', desc: 'Squad headcounts, discounts and membership fee assumptions.',
     sections: [
       { title: 'Discount assumptions', fields: [
-        { key: 'discount_2nd_pct', label: '2nd-child discount (%)', type: 'number', hint: 'Applied to the 2nd-child count and that squad\'s fee, below' },
-        { key: 'discount_3rd_pct', label: '3rd+ child discount (%)', type: 'number', hint: 'Applied to the 3rd+-child count and that squad\'s fee, below' },
+        { key: 'discount_3rd_pct', label: '3rd child discount (%)', type: 'number', hint: 'Applied to the training fee only — off the 3rd-child count in the squad table below' },
+        { key: 'discount_4th_pct', label: '4th child discount (%)', type: 'number', hint: 'Applied to the training fee only — off the 4th-child count below (Matt: 4th swimmer is 100% off the cheapest fee — set that squad\'s rate accordingly)' },
+        { key: 'discount_staff_pct', label: 'Staff discount (%)', type: 'number', hint: 'Applied to the training fee only — defaults to 100% so a fresh submission matches today\'s fully-free-staff treatment unless changed' },
       ]},
       { title: 'Squads', type: 'squad_table',
-        hint: 'Members and Fee £/mo are pre-filled from Baseline_Squads in the Sheet — adjust either for expected joiners/leavers or 2027 fee changes, then set discount and staff (free) counts. Monthly income = members × fee, minus discounts and free staff.' },
+        hint: 'Members, Training Fee and Membership Fee are pre-filled from Baseline_Squads in the Sheet — adjust for expected joiners/leavers or 2027 fee changes, then set the discount counts. Monthly income = full-rate members × (training + membership fee), plus each discounted group at its own rate — discounts apply to the training fee only, the membership fee is always charged in full.' },
       { title: 'Outlook', fields: [
         { key: 'membership_notes', label: 'Expected joiners/leavers or fee changes next year?', type: 'textarea', wide: true },
       ]},
     ],
   },
   {
-    id: 'admin', icon: '🗂️', name: 'General Admin', desc: 'Affiliation fees, software, kit & sundries.',
+    id: 'admin', icon: '🗂️', name: 'General Admin', desc: 'ASA affiliation, software, kit & sundries. Multiple people may contribute to this group.',
     sections: [
-      { title: 'Fixed costs', fields: [
-        { key: 'asa_fee', label: 'ASA affiliation fee (£)', type: 'number' },
-        { key: 'software_cost', label: 'Software & subscriptions (£/yr)', type: 'number' },
-        { key: 'kit_budget', label: 'Kit & clothing budget (£)', type: 'number' },
+      { title: 'ASA affiliation', fields: [
+        { key: 'asa_swimmer_rate', label: 'ASA rate — swimmer (£)', type: 'number' },
+        { key: 'asa_volunteer_rate', label: 'ASA rate — volunteer (£)', type: 'number' },
+        { key: 'volunteer_headcount', label: 'Volunteer headcount', type: 'number', hint: 'Swimmer headcount is pulled automatically from Membership\'s squad totals — just enter the number of volunteers here.' },
       ]},
+      { title: 'Software & subscriptions', type: 'generic_repeater', rowsKey: 'software',
+        columns: [
+          { field: 'name', label: 'Name', type: 'text', placeholder: 'e.g. Commit Swimming' },
+          { field: 'cost', label: 'Cost (£/yr)', type: 'number', width: 130 }
+        ],
+        hint: 'Add a row per subscription or software cost.' },
+      { title: 'Kit & clothing', type: 'generic_repeater', rowsKey: 'kit',
+        columns: [
+          { field: 'category', label: 'Category', type: 'text' },
+          { field: 'cost', label: 'Cost (£)', type: 'number', width: 130 }
+        ],
+        hint: 'Pre-filled with Staff, Volunteers and Finals — add more rows as needed.' },
       { title: 'Notes', fields: [
         { key: 'admin_notes', label: 'Anything else the Treasurer should know?', type: 'textarea', wide: true },
       ]},
@@ -404,6 +433,14 @@ const GROUPS = [
     // across the year — "Unplanned spend" deliberately isn't here, since it's
     // logged actual spend rather than a budget assumption; keep editing that
     // directly on the Master_2027 tab.
+    //
+    // RESTRUCTURED 23 Sept — several lines moved OUT of this group to the group
+    // that actually owns them: L2/L1/Coach-Assistant/Lifeguard courses and
+    // Trophies/Medals/Rosettes to Coaching & Staffing / Meet Team, ASA Volunteer
+    // Fees and Club Sundries Admin/Software to General Admin. See
+    // claude/Assumptions-to-Ledger-Mapping.md, "Update, 23 Sept (part 4)" — this
+    // group stays standalone for now (Phase 1); merging it into General Admin
+    // with per-line assignment is planned for the future ClubHuB migration (Phase 2).
     id: 'treasurer', icon: '💷', name: 'Treasurer', desc: 'Payroll, and every Ledger line without its own group form.',
     sections: [
       { title: 'Salaried roles', fields: [
@@ -420,23 +457,16 @@ const GROUPS = [
       { title: 'Coaching costs', fields: [
         { key: 'coach_meet_expenses', label: 'Coach meet expenses — mileage/accommodation (£/yr)', type: 'number' },
         { key: 'coach_meet_passes', label: 'Coach meet passes (£/yr)', type: 'number' },
-        { key: 'l2_coach_courses', label: 'L2 coach courses (£/yr)', type: 'number' },
-        { key: 'l1_coach_course', label: 'L1 coach course (£/yr)', type: 'number' },
-        { key: 'coach_assistant_course', label: 'Coach/assistant course (£/yr)', type: 'number' },
-        { key: 'lifeguard_course', label: 'Lifeguard course (£/yr)', type: 'number' },
         { key: 'sc_cost', label: 'S&C (£/yr)', type: 'number' },
         { key: 'lifeguard_cover_bishopsgate', label: 'Lifeguard cover — Bishopsgate (£/yr)', type: 'number' },
         { key: 'lifeguard_cover_wlc', label: 'Lifeguard cover — WLC (£/yr)', type: 'number' },
       ]},
       { title: 'Pool & admin costs', fields: [
         { key: 'lt_equipment_hire', label: 'LT equipment hire (£/yr)', type: 'number' },
-        { key: 'asa_volunteer_fees', label: 'ASA volunteer fees (£/yr)', type: 'number' },
-        { key: 'club_sundries_software', label: 'Club sundries admin, software (£/yr)', type: 'number' },
         { key: 'commit_swimming_software', label: 'Commit Swimming software (£/yr)', type: 'number' },
         { key: 'it_cost', label: 'IT (£/yr)', type: 'number' },
         { key: 'arena_fees', label: 'Arena fees (£/yr)', type: 'number' },
         { key: 'bsbasa_fee', label: 'BSBASA fee (£/yr)', type: 'number' },
-        { key: 'trophies_medals_rosettes', label: 'Trophies, medals, rosettes (£/yr)', type: 'number' },
         { key: 'outside_services', label: 'Outside services (£/yr)', type: 'number' },
         { key: 'specialist_staff', label: 'Specialist staff — nutrition, psychologist (£/yr)', type: 'number' },
         { key: 'meeting_room_hire', label: 'Meeting room hire (£/yr)', type: 'number' },
@@ -520,18 +550,30 @@ function applyFooter(settings){
 // ---- row-state helpers (squads / venues / meets / coaches) --------------------
 
 function defaultMeetRow(i){ return { name: 'Meet ' + i, month: '', income: 0, poolHire: 0, numCoaches: 0, coachHours: 0, gifts: 0, catering: 0, roomHire: 0, parkingPermits: 0 }; }
-function defaultCoachRow(){ return { name: '', payCode: '', rate: 0, hours: 0 }; }
+function defaultCoachRow(){ return { name: '', payCode: '', rate: 0, hours: 0, notes: '' }; }
 
 // ---- squad table (membership) --------------------------------------------------
+
+// Fixed discount rates, 23 Sept — these don't vary submission to submission
+// (Matt gave them as club-wide policy), so they're hard-coded here to mirror
+// BOARDING_TERM_DISCOUNT_PCT / BOARDING_NONTERM_DISCOUNT_PCT /
+// TEACHER_COACH_DISCOUNT_PCT in Code.gs rather than being editable fields.
+const BOARDING_TERM_DISCOUNT_PCT = 37;
+const BOARDING_NONTERM_DISCOUNT_PCT = 70;
+const TEACHER_COACH_DISCOUNT_PCT = 100;
 
 function squadRowHtml(s, i){
   return `<tr data-i="${i}">
     <td><span class="rt-name">${esc(s.name)}</span><br><span class="rt-cat">${esc(s.cat || '')}</span></td>
     <td><input type="number" step="1" min="0" class="sq-members" value="${s.members}"></td>
-    <td><input type="number" step="any" min="0" class="sq-fee" value="${s.fee}" placeholder="£/mo"></td>
-    <td><input type="number" step="1" min="0" class="sq-second" value="${s.second}"></td>
+    <td><input type="number" step="any" min="0" class="sq-trainingfee" value="${s.trainingFee}" placeholder="£/mo"></td>
+    <td><input type="number" step="any" min="0" class="sq-membershipfee" value="${s.membershipFee}" placeholder="£/mo"></td>
     <td><input type="number" step="1" min="0" class="sq-third" value="${s.third}"></td>
+    <td><input type="number" step="1" min="0" class="sq-fourth" value="${s.fourth}"></td>
     <td><input type="number" step="1" min="0" class="sq-staff" value="${s.staff}"></td>
+    <td><input type="number" step="1" min="0" class="sq-boardterm" value="${s.boardingTerm || 0}"></td>
+    <td><input type="number" step="1" min="0" class="sq-boardnonterm" value="${s.boardingNonTerm || 0}"></td>
+    <td><input type="number" step="1" min="0" class="sq-teachercoach" value="${s.teacherCoach || 0}"></td>
     <td class="rt-computed sq-income">£0</td>
   </tr>`;
 }
@@ -544,11 +586,12 @@ function renderSquadSection(sec){
       <div class="repeater">
         <table class="repeater-table" id="squadTable">
           <thead><tr>
-            <th>Squad</th><th style="width:80px;">Members</th><th style="width:104px;">Fee £/mo</th><th style="width:80px;">2nd child</th><th style="width:80px;">3rd+ child</th><th style="width:64px;">Staff</th><th style="width:120px;">Monthly income</th>
+            <th>Squad</th><th style="width:80px;">Members</th><th style="width:104px;">Training Fee £/mo</th><th style="width:110px;">Membership Fee £/mo</th><th style="width:76px;">3rd child</th><th style="width:76px;">4th child</th><th style="width:64px;">Staff</th><th style="width:110px;">Boarding (Term)</th><th style="width:120px;">Boarding (Non-Term)</th><th style="width:100px;">Teacher/Coach</th><th style="width:120px;">Monthly income</th>
           </tr></thead>
           <tbody>${formRowState.squads.map((s,i) => squadRowHtml(s,i)).join('')}</tbody>
         </table>
         <div class="repeater-foot" id="squadFoot"></div>
+        <div class="section-note">Discounts apply to the Training Fee only — the Membership Fee is always paid in full, even for a 100%-discounted member (e.g. Teacher/Coach). 3rd/4th child and Staff discounts use the rates set above; Boarding (Term) is a fixed ${BOARDING_TERM_DISCOUNT_PCT}% off, Boarding (Non-Term) a fixed ${BOARDING_NONTERM_DISCOUNT_PCT}% off, and Teacher/Coach a fixed ${TEACHER_COACH_DISCOUNT_PCT}% off — these three are club policy and aren't editable here.</div>
       </div>
     </div>`;
 }
@@ -556,32 +599,47 @@ function renderSquadSection(sec){
 function recomputeSquadTable(){
   const table = document.getElementById('squadTable');
   if (!table) return;
-  const d2 = Number(document.getElementById('f_discount_2nd_pct')?.value || 0);
   const d3 = Number(document.getElementById('f_discount_3rd_pct')?.value || 0);
-  let totalMembers = 0, totalStaff = 0, totalSecond = 0, totalThird = 0, totalMonthly = 0;
+  const d4 = Number(document.getElementById('f_discount_4th_pct')?.value || 0);
+  const dStaff = Number(document.getElementById('f_discount_staff_pct')?.value || 0);
+  let totalMembers = 0, totalMonthly = 0;
+  function discountedIncome(count, trainingFee, membershipFee, discPct){
+    return count * (trainingFee * (1 - discPct / 100) + membershipFee);
+  }
   table.querySelectorAll('tbody tr').forEach(tr => {
     const i = Number(tr.getAttribute('data-i'));
     const s = formRowState.squads[i];
     s.members = Number(tr.querySelector('.sq-members').value || 0);
-    s.fee = Number(tr.querySelector('.sq-fee').value || 0);
-    s.second = Number(tr.querySelector('.sq-second').value || 0);
+    s.trainingFee = Number(tr.querySelector('.sq-trainingfee').value || 0);
+    s.membershipFee = Number(tr.querySelector('.sq-membershipfee').value || 0);
     s.third = Number(tr.querySelector('.sq-third').value || 0);
+    s.fourth = Number(tr.querySelector('.sq-fourth').value || 0);
     s.staff = Number(tr.querySelector('.sq-staff').value || 0);
-    const payingBase = Math.max(0, s.members - s.staff - s.second - s.third);
-    const rowMonthly = payingBase * s.fee + s.second * s.fee * (1 - d2 / 100) + s.third * s.fee * (1 - d3 / 100);
+    s.boardingTerm = Number(tr.querySelector('.sq-boardterm').value || 0);
+    s.boardingNonTerm = Number(tr.querySelector('.sq-boardnonterm').value || 0);
+    s.teacherCoach = Number(tr.querySelector('.sq-teachercoach').value || 0);
+    const discountedCount = s.staff + s.third + s.fourth + s.boardingTerm + s.boardingNonTerm + s.teacherCoach;
+    const fullPayers = Math.max(0, s.members - discountedCount);
+    const rowMonthly = fullPayers * (s.trainingFee + s.membershipFee)
+      + discountedIncome(s.staff, s.trainingFee, s.membershipFee, dStaff)
+      + discountedIncome(s.third, s.trainingFee, s.membershipFee, d3)
+      + discountedIncome(s.fourth, s.trainingFee, s.membershipFee, d4)
+      + discountedIncome(s.boardingTerm, s.trainingFee, s.membershipFee, BOARDING_TERM_DISCOUNT_PCT)
+      + discountedIncome(s.boardingNonTerm, s.trainingFee, s.membershipFee, BOARDING_NONTERM_DISCOUNT_PCT)
+      + discountedIncome(s.teacherCoach, s.trainingFee, s.membershipFee, TEACHER_COACH_DISCOUNT_PCT);
     tr.querySelector('.sq-income').textContent = fmtGBP(rowMonthly);
-    totalMembers += s.members; totalStaff += s.staff; totalSecond += s.second; totalThird += s.third; totalMonthly += rowMonthly;
+    totalMembers += s.members; totalMonthly += rowMonthly;
   });
   const foot = document.getElementById('squadFoot');
   if (foot) foot.innerHTML =
-    `<span>${totalMembers} members · ${totalStaff} staff · ${totalSecond} on 2nd-child · ${totalThird} on 3rd+ · <span class="hint">Aug is fee-free, so annual = monthly × 11</span></span>` +
+    `<span>${totalMembers} members · <span class="hint">Aug is fee-free, so annual = monthly × 11</span></span>` +
     `<span>Monthly <b>${fmtGBP(totalMonthly)}</b> · Annual <b>${fmtGBP(totalMonthly * 11)}</b></span>`;
 }
 
 function bindSquadEvents(){
   const table = document.getElementById('squadTable');
   if (table) table.addEventListener('input', recomputeSquadTable);
-  ['f_discount_2nd_pct', 'f_discount_3rd_pct'].forEach(id => {
+  ['f_discount_3rd_pct', 'f_discount_4th_pct', 'f_discount_staff_pct'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', recomputeSquadTable);
   });
@@ -595,6 +653,7 @@ function venueRowHtml(v, i){
     <td><input type="number" step="any" min="0" class="ve-rate" value="${v.rate}"></td>
     <td><input type="number" step="any" class="ve-inflation" value="${v.inflation}"></td>
     <td><select class="ve-effective">${MONTHS.map(m => `<option value="${m}" ${m === v.effectiveMonth ? 'selected' : ''}>${m}</option>`).join('')}</select></td>
+    <td><input type="number" step="any" min="0" class="ve-augoverride" value="${v.augWeeksOverride || 0}" placeholder="0"></td>
   </tr>`;
 }
 
@@ -605,10 +664,11 @@ function renderVenueSection(sec){
       ${sec.hint ? `<div class="hint" style="margin-bottom:10px;">${esc(sec.hint)}</div>` : ''}
       <div class="repeater">
         <table class="repeater-table" id="venueTable">
-          <thead><tr><th>Venue</th><th style="width:150px;">Rate</th><th style="width:140px;">Annual inflation (%)</th><th style="width:110px;">Effective from</th></tr></thead>
+          <thead><tr><th>Venue</th><th style="width:150px;">Rate</th><th style="width:140px;">Annual inflation (%)</th><th style="width:110px;">Effective from</th><th style="width:140px;">August weeks (override)</th></tr></thead>
           <tbody>${formRowState.venues.map((v,i) => venueRowHtml(v,i)).join('')}</tbody>
         </table>
         <div class="repeater-foot" id="venueFoot"></div>
+        <div class="section-note">All venues are assumed to run 0 weeks in August (no pool hire/training) unless overridden here — enter WLC's actual August weeks if it operates through the summer; leave at 0 for every other venue.</div>
       </div>
     </div>`;
 }
@@ -619,6 +679,7 @@ function syncVenuesFromDom(){
     formRowState.venues[i].rate = Number(tr.querySelector('.ve-rate').value || 0);
     formRowState.venues[i].inflation = Number(tr.querySelector('.ve-inflation').value || 0);
     formRowState.venues[i].effectiveMonth = tr.querySelector('.ve-effective').value;
+    formRowState.venues[i].augWeeksOverride = Number(tr.querySelector('.ve-augoverride').value || 0);
   });
 }
 
@@ -742,6 +803,7 @@ function staffRowHtml(r, i){
     <td><input type="text" class="st-code" placeholder="Pay scale code" value="${esc(r.payCode)}"></td>
     <td><input type="number" step="any" min="0" class="st-rate ${known ? 'rt-autofill' : ''}" value="${r.rate}" placeholder="£/hr"></td>
     <td><input type="number" step="any" min="0" class="st-hours" value="${r.hours || 0}" placeholder="hrs/wk"></td>
+    <td><input type="text" class="st-notes" placeholder="e.g. Assisting County Development" value="${esc(r.notes || '')}"></td>
     <td><button type="button" class="rt-remove" data-remove="${i}" title="Remove row">✕</button></td>
   </tr>`;
 }
@@ -754,7 +816,7 @@ function renderStaffSection(sec){
       ${sec.hint ? `<div class="hint" style="margin-bottom:10px;">${esc(sec.hint)}</div>` : ''}
       <div class="repeater">
         <table class="repeater-table" data-rowskey="${sec.rowsKey}">
-          <thead><tr><th>Name</th><th style="width:170px;">Pay scale code</th><th style="width:110px;">Rate (£/hr)</th><th style="width:100px;">Hours/week</th><th style="width:36px;"></th></tr></thead>
+          <thead><tr><th>Name</th><th style="width:170px;">Pay scale code</th><th style="width:110px;">Rate (£/hr)</th><th style="width:100px;">Hours/week</th><th style="width:220px;">Notes</th><th style="width:36px;"></th></tr></thead>
           <tbody>${rows.map((r,i) => staffRowHtml(r,i)).join('')}</tbody>
         </table>
         <button type="button" class="repeater-add" data-addrow="${sec.rowsKey}">+ Add staff</button>
@@ -809,7 +871,150 @@ function syncStaffFromDom(rowsKey){
     formRowState[rowsKey][i].payCode = tr.querySelector('.st-code').value;
     formRowState[rowsKey][i].rate = Number(tr.querySelector('.st-rate').value || 0);
     formRowState[rowsKey][i].hours = Number(tr.querySelector('.st-hours').value || 0);
+    formRowState[rowsKey][i].notes = tr.querySelector('.st-notes').value;
   });
+}
+
+// ---- generic add-a-row repeater (lifeguards / development / software / kit) --
+// One generic engine drives every simple "add a row of a few fields" table added
+// 23 Sept, instead of bespoke render/sync/bind functions per table like the
+// older squad/venue/meet/staff tables above. See claude/Assumptions-to-Ledger-
+// Mapping.md, "Update, 23 Sept (part 4)" for which group uses which options:
+//   - fixedRows: true      -> no add/remove; row count is fixed (e.g. one row
+//                              per venue for Lifeguard requirements)
+//   - protectedRows: N      -> first N rows can't be removed (e.g. the 4 fixed
+//                              Development course types); extra rows can still
+//                              be added and removed
+//   - protectedLabelField/protectedLabelKey/protectedLabelMap -> for protected
+//                              rows, show a fixed read-only label instead of a
+//                              text input (looked up by row[protectedLabelKey])
+//   - readOnlyFields: [...] -> always render these fields as plain text (e.g.
+//                              venue name, which must stay matched to the venue)
+//   - computedCol: {label, fn(row)} -> an extra read-only £ column computed
+//                              live from the row (e.g. Number × Cost per course)
+
+function genericRepeaterRowHtml(row, i, sec){
+  const isProtected = sec.protectedRows && i < sec.protectedRows;
+  const cells = sec.columns.map(c => {
+    if (sec.readOnlyFields && sec.readOnlyFields.indexOf(c.field) !== -1){
+      return `<td>${esc(row[c.field] || '')}</td>`;
+    }
+    if (isProtected && c.field === sec.protectedLabelField){
+      const key = row[sec.protectedLabelKey || 'kind'];
+      const label = (sec.protectedLabelMap && sec.protectedLabelMap[key]) || row[c.field] || '';
+      return `<td>${esc(label)}</td>`;
+    }
+    const val = row[c.field] != null ? row[c.field] : (c.type === 'number' ? 0 : '');
+    if (c.type === 'number') return `<td><input type="number" step="any" min="0" class="gr-cell" data-field="${c.field}" value="${val}"></td>`;
+    return `<td><input type="text" class="gr-cell" data-field="${c.field}" placeholder="${esc(c.placeholder || '')}" value="${esc(val)}"></td>`;
+  }).join('');
+  const computedCell = sec.computedCol ? `<td class="num gr-computed">${fmtGBP(sec.computedCol.fn(row))}</td>` : '';
+  const removeCell = (sec.fixedRows || isProtected) ? '<td></td>' : `<td><button type="button" class="rt-remove" data-remove="${i}" title="Remove row">✕</button></td>`;
+  return `<tr data-i="${i}">${cells}${computedCell}${removeCell}</tr>`;
+}
+
+function renderGenericRepeaterSection(sec){
+  const rows = formRowState[sec.rowsKey] || [];
+  const headCells = sec.columns.map(c => `<th${c.width ? ` style="width:${c.width}px;"` : ''}>${esc(c.label || c.field)}</th>`).join('');
+  const computedHead = sec.computedCol ? `<th style="width:100px;">${esc(sec.computedCol.label)}</th>` : '';
+  return `
+    <div class="field-group">
+      <div class="field-group-title">${esc(sec.title)}</div>
+      ${sec.hint ? `<div class="hint" style="margin-bottom:10px;">${esc(sec.hint)}</div>` : ''}
+      <div class="repeater">
+        <table class="repeater-table" data-rowskey="${sec.rowsKey}">
+          <thead><tr>${headCells}${computedHead}<th style="width:36px;"></th></tr></thead>
+          <tbody>${rows.map((r,i) => genericRepeaterRowHtml(r,i,sec)).join('')}</tbody>
+        </table>
+        ${sec.fixedRows ? '' : `<button type="button" class="repeater-add" data-addrow="${sec.rowsKey}">+ Add row</button>`}
+        <div class="repeater-foot" id="foot_${sec.rowsKey}"></div>
+      </div>
+    </div>`;
+}
+
+function blankGenericRow(sec){
+  const o = {};
+  sec.columns.forEach(c => { o[c.field] = c.type === 'number' ? 0 : ''; });
+  if (sec.protectedLabelKey) o[sec.protectedLabelKey] = 'other';
+  return o;
+}
+
+function refreshGenericRepeaterTable(sec){
+  const table = document.querySelector(`table[data-rowskey="${sec.rowsKey}"]`);
+  if (!table) return;
+  table.querySelector('tbody').innerHTML = (formRowState[sec.rowsKey] || []).map((r,i) => genericRepeaterRowHtml(r,i,sec)).join('');
+  bindGenericRepeaterRowEvents(sec);
+}
+
+function syncGenericRepeaterFromDom(sec){
+  const table = document.querySelector(`table[data-rowskey="${sec.rowsKey}"]`);
+  if (!table) return;
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const i = Number(tr.getAttribute('data-i'));
+    if (!formRowState[sec.rowsKey][i]) return;
+    tr.querySelectorAll('.gr-cell').forEach(inp => {
+      const field = inp.getAttribute('data-field');
+      formRowState[sec.rowsKey][i][field] = inp.type === 'number' ? Number(inp.value || 0) : inp.value;
+    });
+  });
+}
+
+function recomputeGenericRepeaterFoot(sec){
+  syncGenericRepeaterFromDom(sec);
+  if (sec.computedCol){
+    document.querySelectorAll(`table[data-rowskey="${sec.rowsKey}"] tbody tr`).forEach(tr => {
+      const i = Number(tr.getAttribute('data-i'));
+      const row = formRowState[sec.rowsKey][i];
+      const cell = tr.querySelector('.gr-computed');
+      if (cell && row) cell.textContent = fmtGBP(sec.computedCol.fn(row));
+    });
+  }
+  const foot = document.getElementById('foot_' + sec.rowsKey);
+  if (!foot) return;
+  if (sec.computedCol){
+    const grandTotal = (formRowState[sec.rowsKey] || []).reduce((a,r) => a + sec.computedCol.fn(r), 0);
+    foot.innerHTML = `<span>Total <b>${fmtGBP(grandTotal)}</b></span>`;
+    return;
+  }
+  const numCol = sec.columns.find(c => c.type === 'number' && c.totalize !== false);
+  if (numCol){
+    const total = (formRowState[sec.rowsKey] || []).reduce((a,r) => a + Number(r[numCol.field] || 0), 0);
+    foot.innerHTML = `<span>Total ${esc(numCol.label || numCol.field)} <b>${fmtGBP(total)}</b></span>`;
+  } else {
+    foot.innerHTML = '';
+  }
+}
+
+function bindGenericRepeaterRowEvents(sec){
+  const table = document.querySelector(`table[data-rowskey="${sec.rowsKey}"]`);
+  if (!table) return;
+  table.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.onclick = () => {
+      const i = Number(btn.getAttribute('data-remove'));
+      formRowState[sec.rowsKey].splice(i, 1);
+      refreshGenericRepeaterTable(sec);
+      recomputeGenericRepeaterFoot(sec);
+    };
+  });
+}
+
+function bindGenericRepeaterEvents(sec){
+  const table = document.querySelector(`table[data-rowskey="${sec.rowsKey}"]`);
+  if (table) table.addEventListener('input', () => recomputeGenericRepeaterFoot(sec));
+  if (!sec.fixedRows){
+    const addBtn = document.querySelector(`.repeater-add[data-addrow="${sec.rowsKey}"]`);
+    if (addBtn) addBtn.onclick = () => {
+      formRowState[sec.rowsKey].push(blankGenericRow(sec));
+      refreshGenericRepeaterTable(sec);
+      recomputeGenericRepeaterFoot(sec);
+    };
+  }
+  bindGenericRepeaterRowEvents(sec);
+  recomputeGenericRepeaterFoot(sec);
+}
+
+function genericRepeaterSections(g){
+  return g.sections.filter(sec => sec.type === 'generic_repeater');
 }
 
 // ---- generic section dispatch ------------------------------------------------
@@ -819,6 +1024,7 @@ function renderSection(sec){
   if (sec.type === 'venue_table') return renderVenueSection(sec);
   if (sec.type === 'meet_table') return renderMeetSection(sec);
   if (sec.type === 'staff_table') return renderStaffSection(sec);
+  if (sec.type === 'generic_repeater') return renderGenericRepeaterSection(sec);
   return `
     <div class="field-group">
       <div class="field-group-title">${esc(sec.title)}</div>
@@ -919,6 +1125,9 @@ function applyGroupData(g, data){
     formRowState.coaches_comp = (data.rows.coaches_comp || []).map(r => ({...r}));
     formRowState.coaches_academy = (data.rows.coaches_academy || []).map(r => ({...r}));
   }
+  genericRepeaterSections(g).forEach(sec => {
+    formRowState[sec.rowsKey] = (data.rows[sec.rowsKey] || []).map(r => ({...r}));
+  });
   currentSubmissionMeta = { submissionId: data.submissionId, status: data.status, reviewNotes: data.reviewNotes };
 }
 
@@ -969,6 +1178,7 @@ function renderForm(data){
   if (g.id === 'venues'){ bindVenueEvents(); recomputeVenueFoot(); }
   if (g.id === 'meets'){ bindMeetEvents(); recomputeMeetFoot(); }
   if (g.id === 'staffing'){ bindStaffEvents('coaches_comp'); bindStaffEvents('coaches_academy'); }
+  genericRepeaterSections(g).forEach(sec => bindGenericRepeaterEvents(sec));
 
   document.getElementById('saveDraftBtn').addEventListener('click', () => submitGroupForm(g, 'draft'));
   document.getElementById('assumptionsForm').addEventListener('submit', (e) => { e.preventDefault(); submitGroupForm(g, 'submit'); });
@@ -1006,6 +1216,10 @@ function collectGroupPayload(g){
     rows.coaches_comp = formRowState.coaches_comp.filter(r => r.name).map(r => ({ ...r }));
     rows.coaches_academy = formRowState.coaches_academy.filter(r => r.name).map(r => ({ ...r }));
   }
+  genericRepeaterSections(g).forEach(sec => {
+    syncGenericRepeaterFromDom(sec);
+    rows[sec.rowsKey] = (formRowState[sec.rowsKey] || []).map(r => ({ ...r }));
+  });
 
   return { values, rows };
 }
@@ -1132,19 +1346,25 @@ function renderDetailFields(detail){
   </div>`;
 }
 
+// Row keys with a bespoke detail-view table below — anything else in detail.rows
+// (lifeguards / development / software / kit, added 23 Sept) falls through to the
+// generic renderer at the bottom of this function instead of being silently
+// dropped from the review screen.
+const DETAIL_ROWS_BESPOKE = ['squads', 'venues', 'meets', 'coaches_comp', 'coaches_academy'];
+
 function renderDetailRows(detail){
   const rows = detail.rows || {};
   let html = '';
   if (rows.squads && rows.squads.length){
     html += `<div class="sub-rows-title">Squads (${rows.squads.length})</div>` +
-      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Squad</th><th>Members</th><th>Fee</th><th>2nd</th><th>3rd+</th><th>Staff</th></tr></thead><tbody>` +
-      rows.squads.map(sq => `<tr><td>${esc(sq.name)}</td><td class="num">${sq.members}</td><td class="num">£${sq.fee}</td><td class="num">${sq.second}</td><td class="num">${sq.third}</td><td class="num">${sq.staff}</td></tr>`).join('') +
+      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Squad</th><th>Members</th><th>Training Fee</th><th>Membership Fee</th><th>3rd</th><th>4th</th><th>Staff</th><th>Board (Term)</th><th>Board (Non-Term)</th><th>Teacher/Coach</th></tr></thead><tbody>` +
+      rows.squads.map(sq => `<tr><td>${esc(sq.name)}</td><td class="num">${sq.members}</td><td class="num">£${sq.trainingFee}</td><td class="num">£${sq.membershipFee}</td><td class="num">${sq.third}</td><td class="num">${sq.fourth}</td><td class="num">${sq.staff}</td><td class="num">${sq.boardingTerm || 0}</td><td class="num">${sq.boardingNonTerm || 0}</td><td class="num">${sq.teacherCoach || 0}</td></tr>`).join('') +
       `</tbody></table></div>`;
   }
   if (rows.venues && rows.venues.length){
     html += `<div class="sub-rows-title">Venues</div>` +
-      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Venue</th><th>Rate</th><th>Inflation</th><th>Effective from</th></tr></thead><tbody>` +
-      rows.venues.map(v => `<tr><td>${esc(v.name)}</td><td class="num">£${Number(v.rate||0).toLocaleString('en-GB')} ${esc(v.unit||'')}</td><td class="num">${v.inflation}%</td><td class="num">${esc(v.effectiveMonth || '—')}</td></tr>`).join('') +
+      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Venue</th><th>Rate</th><th>Inflation</th><th>Effective from</th><th>August weeks (override)</th></tr></thead><tbody>` +
+      rows.venues.map(v => `<tr><td>${esc(v.name)}</td><td class="num">£${Number(v.rate||0).toLocaleString('en-GB')} ${esc(v.unit||'')}</td><td class="num">${v.inflation}%</td><td class="num">${esc(v.effectiveMonth || '—')}</td><td class="num">${v.augWeeksOverride || 0}</td></tr>`).join('') +
       `</tbody></table></div>`;
   }
   if (rows.meets && rows.meets.length){
@@ -1155,16 +1375,27 @@ function renderDetailRows(detail){
   }
   if (rows.coaches_comp && rows.coaches_comp.length){
     html += `<div class="sub-rows-title">Competitive coaches</div>` +
-      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Name</th><th>Pay scale code</th><th>Rate</th><th>Hours/wk</th></tr></thead><tbody>` +
-      rows.coaches_comp.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.payCode || '—')}</td><td class="num">£${r.rate}/hr</td><td class="num">${r.hours || 0}</td></tr>`).join('') +
+      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Name</th><th>Pay scale code</th><th>Rate</th><th>Hours/wk</th><th>Notes</th></tr></thead><tbody>` +
+      rows.coaches_comp.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.payCode || '—')}</td><td class="num">£${r.rate}/hr</td><td class="num">${r.hours || 0}</td><td>${esc(r.notes || '')}</td></tr>`).join('') +
       `</tbody></table></div>`;
   }
   if (rows.coaches_academy && rows.coaches_academy.length){
     html += `<div class="sub-rows-title">Academy staff</div>` +
-      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Name</th><th>Pay scale code</th><th>Rate</th><th>Hours/wk</th></tr></thead><tbody>` +
-      rows.coaches_academy.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.payCode || '—')}</td><td class="num">£${r.rate}/hr</td><td class="num">${r.hours || 0}</td></tr>`).join('') +
+      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr><th>Name</th><th>Pay scale code</th><th>Rate</th><th>Hours/wk</th><th>Notes</th></tr></thead><tbody>` +
+      rows.coaches_academy.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.payCode || '—')}</td><td class="num">£${r.rate}/hr</td><td class="num">${r.hours || 0}</td><td>${esc(r.notes || '')}</td></tr>`).join('') +
       `</tbody></table></div>`;
   }
+  // Generic fallback for the 23-Sept add-a-row tables (lifeguards / development / software / kit).
+  Object.keys(rows).forEach(rowsKey => {
+    if (DETAIL_ROWS_BESPOKE.indexOf(rowsKey) !== -1) return;
+    const list = rows[rowsKey];
+    if (!list || !list.length) return;
+    const cols = Object.keys(list[0]);
+    html += `<div class="sub-rows-title">${esc(rowsKey)} (${list.length})</div>` +
+      `<div class="repeater sub-rows-table"><table class="repeater-table"><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>` +
+      list.map(r => `<tr>${cols.map(c => `<td class="${typeof r[c] === 'number' ? 'num' : ''}">${typeof r[c] === 'number' ? r[c].toLocaleString('en-GB') : esc(r[c] || '')}</td>`).join('')}</tr>`).join('') +
+      `</tbody></table></div>`;
+  });
   return html;
 }
 
