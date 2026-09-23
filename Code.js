@@ -37,7 +37,7 @@
 var SHEET_ID = '1VNBtb24dpbAJcpAtgQkuiheLZOLCXGVa8t7LY386dM4';
 
 /**
- * Data-driven description of each of the 5 submitting groups: which tabs
+ * Data-driven description of each of the 6 submitting groups: which tabs
  * back them, and how client-side field/row keys map onto real column
  * headers in the Sheet. All load/save logic below is generic and driven
  * entirely off this table, so adding a column is a one-line change here
@@ -46,12 +46,15 @@ var SHEET_ID = '1VNBtb24dpbAJcpAtgQkuiheLZOLCXGVa8t7LY386dM4';
  * JUDGEMENT CALLS Matt should sanity-check — see BRIEFING.md for the full
  * list, but flagged here too since this is where they live in code:
  *
- * 1. Coaching_Fields' "Employees Count" column is used to hold the
- *    SALARIED-EMPLOYEE ANNUAL COST TOTAL (£) from the approved mockup, not
- *    a headcount — the mockup's field was "Employees — annual salary total
- *    (£)". If you'd rather it really was a headcount, rename the column
- *    and update the `col:` value below to match; nothing else needs to
- *    change since every read/write here goes via the header text.
+ * 1. RESOLVED 11 Sept — was: Coaching_Fields' "Employees Count" column held
+ *    the SALARIED-EMPLOYEE ANNUAL COST TOTAL (£), not a headcount, a naming
+ *    mismatch inherited from the approved mockup. Now moot: those 4 payroll
+ *    fields (Employees/HoA/NI%/Pension%) moved off Coaching & Staffing
+ *    entirely, onto the new `treasurer` group's own Treasurer_Fields sheet
+ *    — Cameron (Head Coach) submits Coaching & Staffing and shouldn't be
+ *    the one entering or seeing club payroll figures. Column is now called
+ *    "Employees Annual Salary Total" there, matching what it actually
+ *    holds.
  * 2. Several notes/detail fields from the mockup (away-meet notes,
  *    mid-year venue notes, CPD budget, staffing notes, membership outlook
  *    notes) don't have columns in the 12 tabs you specified, since those
@@ -83,9 +86,12 @@ var GROUP_DEFS = {
           { field: 'month', col: 'Month', type: 'text' },
           { field: 'income', col: 'Income', type: 'number' },
           { field: 'poolHire', col: 'Pool Hire', type: 'number' },
-          { field: 'coachCosts', col: 'Coach Costs', type: 'number' },
+          { field: 'numCoaches', col: 'Number of Coaches', type: 'number' }, // EXTRA column, added 15 Sept — replaces the old free-typed Coach Costs figure
+          { field: 'coachHours', col: 'Coach Hours', type: 'number' }, // EXTRA column, added 15 Sept — see NMW_RATE below
           { field: 'gifts', col: 'Gifts', type: 'number' },
-          { field: 'catering', col: 'Catering', type: 'number' }
+          { field: 'catering', col: 'Catering', type: 'number' },
+          { field: 'roomHire', col: 'Room Hire', type: 'number' }, // EXTRA column, added 10 Sept — see BRIEFING.md §4
+          { field: 'parkingPermits', col: 'Parking Permits', type: 'number' } // EXTRA column, added 10 Sept
         ]
       }
     ]
@@ -113,10 +119,9 @@ var GROUP_DEFS = {
     label: 'Coaching & Staffing',
     singleSheet: 'Coaching_Fields',
     singleFields: [
-      { key: 'employees_cost', col: 'Employees Count', type: 'number' }, // see note 1 above
-      { key: 'hoa_salary', col: 'Head of Academy Salary', type: 'number' },
-      { key: 'ni_pct', col: 'NI %', type: 'number' },
-      { key: 'pension_pct', col: 'Pension %', type: 'number' },
+      // Employees/HoA/NI%/Pension% moved OUT to the new 'treasurer' group, 11 Sept —
+      // Cameron (Head Coach) submits this group and shouldn't be the one entering
+      // club payroll figures. See claude/Assumptions-to-Ledger-Mapping.md.
       { key: 'cpd_budget', col: 'CPD Budget', type: 'number' }, // EXTRA column
       { key: 'staffing_notes', col: 'Staffing Notes', type: 'text' } // EXTRA column
     ],
@@ -176,6 +181,54 @@ var GROUP_DEFS = {
       { key: 'admin_notes', col: 'Notes', type: 'text' }
     ],
     repeaters: []
+  },
+  // Added 11 Sept — houses club payroll (moved out of Coaching & Staffing, since
+  // Cameron submits that group and shouldn't see/enter salary figures) plus the
+  // ~24 Ledger lines that previously had no submitting group at all and were only
+  // ever typed straight into the Master_2027 tab. Each is a flat annual £ figure,
+  // split evenly across months by computeMasterLines_ — same pattern as CPD/Kit
+  // investment. "Unplanned spend (logged)" deliberately stays OUT of this group —
+  // it's actual spend being logged against the budget, not a planned assumption,
+  // so it stays as direct Master_2027 editing. Access is via the Groups column on
+  // the Treasurer's own Users row, same as every other group — see
+  // userCanAccessGroup_(). See claude/Assumptions-to-Ledger-Mapping.md for the
+  // full reasoning and the flat-annual-vs-monthly-grid judgement call (flat
+  // annual chosen, 11 Sept).
+  treasurer: {
+    label: 'Treasurer',
+    singleSheet: 'Treasurer_Fields',
+    singleFields: [
+      { key: 'employees_cost', col: 'Employees Annual Salary Total', type: 'number' },
+      { key: 'hoa_salary', col: 'Head of Academy Salary', type: 'number' },
+      { key: 'ni_pct', col: 'NI %', type: 'number' },
+      { key: 'pension_pct', col: 'Pension %', type: 'number' },
+      { key: 'other_income', col: 'Other Income', type: 'number' },
+      { key: 'clothing_income', col: 'Clothing Income', type: 'number' },
+      { key: 'spectator_fee', col: 'Spectator Fee', type: 'number' },
+      { key: 'lt_equipment_hire', col: 'LT Equipment Hire', type: 'number' },
+      { key: 'coach_meet_expenses', col: 'Coach Meet Expenses', type: 'number' },
+      { key: 'coach_meet_passes', col: 'Coach Meet Passes', type: 'number' },
+      { key: 'l2_coach_courses', col: 'L2 Coach Courses', type: 'number' },
+      { key: 'l1_coach_course', col: 'L1 Coach Course', type: 'number' },
+      { key: 'coach_assistant_course', col: 'Coach/Assistant Course', type: 'number' },
+      { key: 'lifeguard_course', col: 'Lifeguard Course', type: 'number' },
+      { key: 'sc_cost', col: 'S&C', type: 'number' },
+      { key: 'lifeguard_cover_bishopsgate', col: 'Lifeguard Cover Bishopsgate', type: 'number' },
+      { key: 'lifeguard_cover_wlc', col: 'Lifeguard Cover WLC', type: 'number' },
+      { key: 'asa_volunteer_fees', col: 'ASA Volunteer Fees', type: 'number' },
+      { key: 'club_sundries_software', col: 'Club Sundries Admin Software', type: 'number' },
+      { key: 'commit_swimming_software', col: 'Commit Swimming Software', type: 'number' },
+      { key: 'it_cost', col: 'IT', type: 'number' },
+      { key: 'arena_fees', col: 'Arena Fees', type: 'number' },
+      { key: 'bsbasa_fee', col: 'BSBASA Fee', type: 'number' },
+      { key: 'trophies_medals_rosettes', col: 'Trophies Medals Rosettes', type: 'number' },
+      { key: 'outside_services', col: 'Outside Services', type: 'number' },
+      { key: 'specialist_staff', col: 'Specialist Staff', type: 'number' },
+      { key: 'meeting_room_hire', col: 'Meeting Room Hire', type: 'number' },
+      { key: 'clothing_cost', col: 'Clothing', type: 'number' },
+      { key: 'treasurer_notes', col: 'Notes', type: 'text' }
+    ],
+    repeaters: []
   }
 };
 
@@ -183,7 +236,8 @@ var REQUIRED_TABS = [
   'Settings', 'People', 'Users', 'Submissions',
   'MeetTeam_Fields', 'MeetTeam_Meets', 'PoolVenues',
   'Coaching_Fields', 'Coaching_CompetitiveCoaches', 'Coaching_AcademyStaff',
-  'Membership_Squads', 'Membership_Discounts', 'GeneralAdmin_Fields'
+  'Membership_Squads', 'Membership_Discounts', 'GeneralAdmin_Fields',
+  'Treasurer_Fields' // added 11 Sept for the new Treasurer group — see GROUP_DEFS
 ];
 
 var OPTIONAL_TABS = ['Baseline_Squads', 'Baseline_Venues'];
@@ -214,28 +268,48 @@ var OPTIONAL_TABS = ['Baseline_Squads', 'Baseline_Venues'];
 //    own Pool Hire tab (Aug = 0, term-time weighted) rather than a flat
 //    1/12 split — confirmed as the v1 approach; a v2 could instead pull
 //    real booked hours from ClubHuB's TimetableRules for full accuracy.
-// 3. Coach Meet Costs is now AUTO (summed from each meet's own "Coach
-//    Costs" field, which the form already collects) rather than left fully
-//    manual — a v1 improvement, since the data's already being collected.
-//    Coach Meet Expenses / Coach Meet Passes stay manual (the form doesn't
-//    split those out).
-// 4. Meet Costs is now AUTO too — read as each meet's Gifts + Catering
-//    combined. Flag this to Matt if that's not what "Meet Costs" should
-//    mean; it's an assumption, not something he confirmed directly.
+// 3. Coach Meet Costs is AUTO — Number of Coaches × Coach Hours × NMW_RATE,
+//    from each meet's own two fields on the MEET TEAM form (confirmed 15
+//    Sept, replacing a single typed-in £ figure). Applies the same for
+//    every meet, home or away. Coach Meet Expenses / Coach Meet Passes are
+//    a different thing (mileage/accommodation/per-diem, not per-meet coach
+//    pay) and now live as flat annual figures on the Treasurer group
+//    (11 Sept) — see item 6 below.
+// 4. Meet Costs is AUTO — confirmed by Matt, 10 Sept, as "combined meet
+//    costs" — read as each meet's Gifts + Catering + Room Hire + Parking
+//    Permits added together. The latter two are new fields (added 10 Sept,
+//    per Matt's flag that meets can also carry venue room-hire and parking
+//    permit costs beyond gifts/catering) — see GROUP_DEFS above and
+//    BRIEFING.md §4 for the two new "extra" columns to add to the Sheet.
+//    Confirmed 11 Sept: these four fields only ever apply to meets Windsor
+//    hosts — away/external meets simply get £0 in all four, no separate
+//    home/away flag needed (Coach Costs is the only field that's non-zero
+//    for an away meet).
 // 5. Comp/Academy Coaches costs need the new Hours/week field (see
 //    GROUP_DEFS above) — a coach row with no hours entered contributes £0,
-//    it won't error.
-// 6. All ~20 lines still marked "manual" below (ASA Volunteer Fees, IT,
-//    Trophies/Medals/Rosettes, course costs, etc.) are real, explained
-//    figures that currently only live in Matt's own treasurer working
-//    file — see the mapping doc. Matt said he'll flag any obvious ones
-//    that should move to a group's own form later; nothing to do here
-//    unless/until he does.
+//    it won't error. Confirmed 11 Sept: Hours/week is the coach's real paid
+//    time block, not summed per squad — a coach covering several squads at
+//    once in one session still logs that session's actual length once, not
+//    once per squad. See the mapping doc's V2 section for the matching
+//    gotcha once hours are ever pulled from ClubHuB's TimetableRules
+//    automatically instead of typed in by hand.
+// 6. RESOLVED 11 Sept — was: ~20 lines stayed "manual" (ASA Volunteer Fees,
+//    IT, Trophies/Medals/Rosettes, course costs, etc.), typed straight into
+//    Master_2027 with no submitting group. Now AUTO, sourced from the new
+//    `treasurer` group as flat annual figures (split ÷12, same pattern as
+//    CPD/Kit investment) — see the TREASURER_LINE_MAP block below and
+//    claude/Assumptions-to-Ledger-Mapping.md. Chosen over a per-line
+//    monthly grid to keep the form simple; the trade-off is these lines
+//    lose whatever real month-to-month shape they had when typed directly
+//    into Master_2027 (e.g. Trophies concentrated around gala season) —
+//    flagged to Matt, accepted. "Unplanned spend (logged)" deliberately
+//    stays manual/direct-edit — it's logged actual spend, not a plan
+//    assumption.
 //
-// Only the five groups' LATEST APPROVED submission is used per group,
-// preferring one with Period = "Full Year" if more than one Approved
-// submission exists (a v1 simplification — quarterly resubmissions aren't
-// merged/diffed yet, see BRIEFING.md).
+// Six groups' LATEST APPROVED submission is used per group (five plus the
+// new Treasurer group, 11 Sept), preferring one with Period = "Full Year"
+// if more than one Approved submission exists (a v1 simplification —
+// quarterly resubmissions aren't merged/diffed yet, see BRIEFING.md).
 
 var MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -243,6 +317,12 @@ var MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'
 // tab (2026 working file) — Aug = 0 (pools closed), otherwise term-time
 // weighted. Used for both pool-venue and coach-contractor cost spreading.
 var WEEKS_IN_MONTH = [4.142857143, 4, 4.428571429, 3.714285714, 4.142857143, 4.285714286, 4.428571429, 0, 4.285714286, 4.428571429, 4.285714286, 3];
+
+// National Minimum Wage (21+ rate), used as the default per-hour rate for meet-day coach
+// cover — added 15 Sept, confirmed by Matt: a meet's Coach Meet Costs is Number of Coaches
+// × Coach Hours × this rate, rather than a single typed-in £ figure per meet. NMW normally
+// rises each April — re-check and update this figure ahead of the 2027 season.
+var NMW_RATE = 12.71;
 
 var MASTER_TAB_NAME = 'Master_2027';
 
@@ -258,9 +338,9 @@ var MASTER_LINE_ORDER = [
   { label: 'WSC Open Meets Income', category: 'Income', kind: 'auto' },
   { label: 'Club Champs Income', category: 'Income', kind: 'auto' },
   { label: 'Novice', category: 'Income', kind: 'auto' },
-  { label: 'Other', category: 'Income', kind: 'manual' },
-  { label: 'Clothing income', category: 'Income', kind: 'manual' },
-  { label: 'Spectator Fee', category: 'Income', kind: 'manual' },
+  { label: 'Other', category: 'Income', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Clothing income', category: 'Income', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Spectator Fee', category: 'Income', kind: 'auto' }, // now Treasurer group, 11 Sept
   { label: 'TOTAL INCOME', category: 'Income', kind: 'total' },
 
   { label: 'Aldershot', category: 'Pool Costs', kind: 'auto' },
@@ -269,7 +349,7 @@ var MASTER_LINE_ORDER = [
   { label: 'Heathfield', category: 'Pool Costs', kind: 'auto' },
   { label: 'WLC', category: 'Pool Costs', kind: 'auto' },
   { label: 'BLC', category: 'Pool Costs', kind: 'auto' },
-  { label: 'LT Equipment hire', category: 'Pool Costs', kind: 'manual' },
+  { label: 'LT Equipment hire', category: 'Pool Costs', kind: 'auto' }, // now Treasurer group, 11 Sept
   { label: 'Total Pool Cost', category: 'Pool Costs', kind: 'total' },
 
   { label: 'Employees', category: 'Staff/Contractor Costs', kind: 'auto' },
@@ -278,38 +358,38 @@ var MASTER_LINE_ORDER = [
   { label: 'Comp Coaches (Contractor)', category: 'Staff/Contractor Costs', kind: 'auto' },
   { label: 'Academy Coaches (Contractor)', category: 'Staff/Contractor Costs', kind: 'auto' },
   { label: 'Coach Meet Costs', category: 'Staff/Contractor Costs', kind: 'auto' },
-  { label: 'Coach Meet Expenses', category: 'Staff/Contractor Costs', kind: 'manual' },
-  { label: 'Coach Meet Passes', category: 'Staff/Contractor Costs', kind: 'manual' },
+  { label: 'Coach Meet Expenses', category: 'Staff/Contractor Costs', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Coach Meet Passes', category: 'Staff/Contractor Costs', kind: 'auto' }, // now Treasurer group, 11 Sept
   { label: 'CPD', category: 'Staff/Contractor Costs', kind: 'auto' },
-  { label: 'L2 Coach Courses', category: 'Staff/Contractor Costs', kind: 'manual' },
-  { label: 'L1 Coach Course', category: 'Staff/Contractor Costs', kind: 'manual' },
-  { label: 'Coach/Assistant Course', category: 'Staff/Contractor Costs', kind: 'manual' },
-  { label: 'Lifeguard Course', category: 'Staff/Contractor Costs', kind: 'manual' },
-  { label: 'S&C', category: 'Staff/Contractor Costs', kind: 'manual' },
-  { label: 'Lifeguard Cover Bishopsgate', category: 'Staff/Contractor Costs', kind: 'manual' },
-  { label: 'Lifeguard Cover WLC', category: 'Staff/Contractor Costs', kind: 'manual' },
+  { label: 'L2 Coach Courses', category: 'Staff/Contractor Costs', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'L1 Coach Course', category: 'Staff/Contractor Costs', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Coach/Assistant Course', category: 'Staff/Contractor Costs', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Lifeguard Course', category: 'Staff/Contractor Costs', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'S&C', category: 'Staff/Contractor Costs', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Lifeguard Cover Bishopsgate', category: 'Staff/Contractor Costs', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Lifeguard Cover WLC', category: 'Staff/Contractor Costs', kind: 'auto' }, // now Treasurer group, 11 Sept
   { label: 'Total Employee/Contractor Cost', category: 'Staff/Contractor Costs', kind: 'total' },
 
   { label: 'ASA', category: 'Membership/Admin', kind: 'auto' },
-  { label: 'ASA Volunteer Fees', category: 'Membership/Admin', kind: 'manual' },
+  { label: 'ASA Volunteer Fees', category: 'Membership/Admin', kind: 'auto' }, // now Treasurer group, 11 Sept
   { label: 'Meet Pool Hire', category: 'Membership/Admin', kind: 'auto' },
   { label: 'Meet Costs', category: 'Membership/Admin', kind: 'auto' },
-  { label: 'Club Sundries Admin, Software', category: 'Membership/Admin', kind: 'manual' },
-  { label: 'Commit Swimming Software', category: 'Membership/Admin', kind: 'manual' },
-  { label: 'IT', category: 'Membership/Admin', kind: 'manual' },
-  { label: 'Arena Fees', category: 'Membership/Admin', kind: 'manual' },
-  { label: 'BSBASA Fee', category: 'Membership/Admin', kind: 'manual' },
-  { label: 'Trophies, Medals, Rosettes', category: 'Membership/Admin', kind: 'manual' },
-  { label: 'Outside Services', category: 'Membership/Admin', kind: 'manual' },
+  { label: 'Club Sundries Admin, Software', category: 'Membership/Admin', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Commit Swimming Software', category: 'Membership/Admin', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'IT', category: 'Membership/Admin', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Arena Fees', category: 'Membership/Admin', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'BSBASA Fee', category: 'Membership/Admin', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Trophies, Medals, Rosettes', category: 'Membership/Admin', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Outside Services', category: 'Membership/Admin', kind: 'auto' }, // now Treasurer group, 11 Sept
   { label: 'Kit investment', category: 'Membership/Admin', kind: 'auto' },
-  { label: 'Specialist Staff (Nutrition, Psychologist)', category: 'Membership/Admin', kind: 'manual' },
-  { label: 'Meeting Room Hire', category: 'Membership/Admin', kind: 'manual' },
-  { label: 'Clothing', category: 'Membership/Admin', kind: 'manual' },
+  { label: 'Specialist Staff (Nutrition, Psychologist)', category: 'Membership/Admin', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Meeting Room Hire', category: 'Membership/Admin', kind: 'auto' }, // now Treasurer group, 11 Sept
+  { label: 'Clothing', category: 'Membership/Admin', kind: 'auto' }, // now Treasurer group, 11 Sept
   { label: 'Total Membership/Admin', category: 'Membership/Admin', kind: 'total' },
 
   { label: 'TOTAL CASH OUT', category: 'Summary', kind: 'total' },
   { label: 'NET CASH FLOW', category: 'Summary', kind: 'total' },
-  { label: 'Unplanned spend (logged)', category: 'Summary', kind: 'manual' },
+  { label: 'Unplanned spend (logged)', category: 'Summary', kind: 'manual' }, // deliberately stays manual/direct-edit — it's logged actual spend, not a Treasurer-group assumption (confirmed 11 Sept)
   { label: 'Adjusted Net Cash Flow (incl. unplanned spend)', category: 'Summary', kind: 'total' }
 ];
 
@@ -741,7 +821,7 @@ function getMyGroupSubmission(groupId, period) {
     }
     if (groupId === 'meets') {
       result.rows.meets = [1, 2, 3].map(function (i) {
-        return { name: 'Meet ' + i, month: '', income: 0, poolHire: 0, coachCosts: 0, gifts: 0, catering: 0 };
+        return { name: 'Meet ' + i, month: '', income: 0, poolHire: 0, numCoaches: 0, coachHours: 0, gifts: 0, catering: 0, roomHire: 0, parkingPermits: 0 };
       });
     }
     if (groupId === 'staffing') {
@@ -1083,6 +1163,7 @@ function computeMasterLines_() {
   var staffingData = loadApprovedGroupData_('staffing', subRows);
   var membershipData = loadApprovedGroupData_('membership', subRows);
   var adminData = loadApprovedGroupData_('admin', subRows);
+  var treasurerData = loadApprovedGroupData_('treasurer', subRows);
 
   var lines = {};
   MASTER_LINE_ORDER.forEach(function (li) {
@@ -1110,7 +1191,7 @@ function computeMasterLines_() {
     });
   }
 
-  // --- Meet Team: Novice gala, per-meet income/pool hire/coach costs/gifts+catering ---
+  // --- Meet Team: Novice gala, per-meet income/pool hire/coach costs/meet costs ---
   if (meetsData) {
     var gCount = Number(meetsData.values.novice_gala_count || 0);
     var gFee = Number(meetsData.values.novice_gala_fee || 0);
@@ -1121,8 +1202,12 @@ function computeMasterLines_() {
       var isChamps = String(mt.name || '').toLowerCase().indexOf('champs') !== -1;
       addToMonth_(lines[isChamps ? 'Club Champs Income' : 'WSC Open Meets Income'], mIdx, Number(mt.income || 0));
       addToMonth_(lines['Meet Pool Hire'], mIdx, -Math.abs(Number(mt.poolHire || 0)));
-      addToMonth_(lines['Coach Meet Costs'], mIdx, -Math.abs(Number(mt.coachCosts || 0)));
-      addToMonth_(lines['Meet Costs'], mIdx, -Math.abs(Number(mt.gifts || 0)) - Math.abs(Number(mt.catering || 0)));
+      // Coach Meet Costs = coaches × hours worked × NMW rate (confirmed 15 Sept) — applies the
+      // same whether the meet is hosted or away, matching each meet's real Coach Hours entry.
+      var meetCoachCost = Number(mt.numCoaches || 0) * Number(mt.coachHours || 0) * NMW_RATE;
+      addToMonth_(lines['Coach Meet Costs'], mIdx, -Math.abs(meetCoachCost));
+      var meetCostsTotal = Number(mt.gifts || 0) + Number(mt.catering || 0) + Number(mt.roomHire || 0) + Number(mt.parkingPermits || 0);
+      addToMonth_(lines['Meet Costs'], mIdx, -Math.abs(meetCostsTotal));
     });
   }
 
@@ -1146,15 +1231,8 @@ function computeMasterLines_() {
 
   // --- Coaching & Staffing ---
   if (staffingData) {
-    var employeesTotal = Number(staffingData.values.employees_cost || 0);
-    var hoaTotal = Number(staffingData.values.hoa_salary || 0);
-    var niPct = Number(staffingData.values.ni_pct || 0);
-    var pensionPct = Number(staffingData.values.pension_pct || 0);
     var cpdTotal = Number(staffingData.values.cpd_budget || 0);
     for (var m3 = 0; m3 < 12; m3++) {
-      lines['Employees'][m3] += -employeesTotal / 12;
-      lines['HoA'][m3] += -hoaTotal / 12;
-      lines['Employer NI & Pension'][m3] += -((niPct + pensionPct) / 100) * (employeesTotal + hoaTotal) / 12;
       lines['CPD'][m3] += -cpdTotal / 12;
     }
     function addCoachCosts_(rows, targetLabel) {
@@ -1178,6 +1256,61 @@ function computeMasterLines_() {
       lines['ASA'][m5] += -asaTotal / 12;
       lines['Kit investment'][m5] += -kitTotal / 12;
     }
+  }
+
+  // --- Treasurer (added 11 Sept) — payroll (moved out of Coaching & Staffing) plus
+  // the ~24 Ledger lines that previously had no submitting group. Every field here
+  // is a flat annual £ figure, split evenly ÷12 across months — same pattern as
+  // CPD/Kit investment above. "Unplanned spend (logged)" is deliberately NOT here;
+  // it stays a direct-edit Master_2027 line (logged actuals, not a plan assumption).
+  if (treasurerData) {
+    var tv = treasurerData.values;
+    var tEmployeesTotal = Number(tv.employees_cost || 0);
+    var tHoaTotal = Number(tv.hoa_salary || 0);
+    var tNiPct = Number(tv.ni_pct || 0);
+    var tPensionPct = Number(tv.pension_pct || 0);
+
+    // label -> [field key, +1 for income / -1 for cost]
+    var TREASURER_LINE_MAP = {
+      'Other': ['other_income', 1],
+      'Clothing income': ['clothing_income', 1],
+      'Spectator Fee': ['spectator_fee', 1],
+      'LT Equipment hire': ['lt_equipment_hire', -1],
+      'Coach Meet Expenses': ['coach_meet_expenses', -1],
+      'Coach Meet Passes': ['coach_meet_passes', -1],
+      'L2 Coach Courses': ['l2_coach_courses', -1],
+      'L1 Coach Course': ['l1_coach_course', -1],
+      'Coach/Assistant Course': ['coach_assistant_course', -1],
+      'Lifeguard Course': ['lifeguard_course', -1],
+      'S&C': ['sc_cost', -1],
+      'Lifeguard Cover Bishopsgate': ['lifeguard_cover_bishopsgate', -1],
+      'Lifeguard Cover WLC': ['lifeguard_cover_wlc', -1],
+      'ASA Volunteer Fees': ['asa_volunteer_fees', -1],
+      'Club Sundries Admin, Software': ['club_sundries_software', -1],
+      'Commit Swimming Software': ['commit_swimming_software', -1],
+      'IT': ['it_cost', -1],
+      'Arena Fees': ['arena_fees', -1],
+      'BSBASA Fee': ['bsbasa_fee', -1],
+      'Trophies, Medals, Rosettes': ['trophies_medals_rosettes', -1],
+      'Outside Services': ['outside_services', -1],
+      'Specialist Staff (Nutrition, Psychologist)': ['specialist_staff', -1],
+      'Meeting Room Hire': ['meeting_room_hire', -1],
+      'Clothing': ['clothing_cost', -1]
+    };
+
+    for (var m6 = 0; m6 < 12; m6++) {
+      lines['Employees'][m6] += -tEmployeesTotal / 12;
+      lines['HoA'][m6] += -tHoaTotal / 12;
+      lines['Employer NI & Pension'][m6] += -((tNiPct + tPensionPct) / 100) * (tEmployeesTotal + tHoaTotal) / 12;
+    }
+    Object.keys(TREASURER_LINE_MAP).forEach(function (label) {
+      var fieldKey = TREASURER_LINE_MAP[label][0];
+      var sign = TREASURER_LINE_MAP[label][1];
+      var annualTotal = Number(tv[fieldKey] || 0);
+      for (var m7 = 0; m7 < 12; m7++) {
+        lines[label][m7] += sign * annualTotal / 12;
+      }
+    });
   }
 
   return lines;
